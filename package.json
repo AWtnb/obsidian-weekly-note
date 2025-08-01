@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-weekly-note",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Personal obsidian plugin to weekly schedule.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
