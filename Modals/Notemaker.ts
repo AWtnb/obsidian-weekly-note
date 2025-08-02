@@ -62,8 +62,8 @@ const noteTemplate = async (app: App, path: string): Promise<string> => {
 			"金 {{Fri}}\n",
 			"土 {{Sat}}\n",
 			"日 {{Sun}}\n",
-			"---\n",
-			"# Todo\n\n",
+			"---",
+			"# Todo\n\n- ",
 		].join("\n")
 	);
 };
@@ -140,13 +140,21 @@ export class NoteMakerModal extends Modal {
 		}
 
 		const notes = weeklyNotes(y);
-		for (const note of notes) {
+		for (let i = 0; i < notes.length; i++) {
+			const note = notes[i];
 			const notePath = folderPath + note.name;
 			if (this.app.vault.getFileByPath(notePath)) {
 				new Notice(`${notePath} already exists.`);
 			} else {
 				const t = this.template || "";
-				await this.app.vault.create(notePath, fillTemplate(t, note));
+				const navs = []
+				if (0 < i) {
+					navs.push(`[[${notes[i - 1].name}|back]]`)
+				}
+				if (i < notes.length - 1) {
+					navs.push(`[[${notes[i + 1].name}|next]]`)
+				}
+				await this.app.vault.create(notePath, fillTemplate(`${navs.join("  |  ")}\n\n${t}`, note));
 			}
 		}
 		this.close();
