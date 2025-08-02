@@ -7,11 +7,15 @@ const toMMdd = (date: Date): string => {
 	);
 };
 
+interface Start {
+	Year: number;
+	Month: number;
+	Day: number;
+}
+
 interface WeeklyNote {
 	name: string;
-	startYear: number;
-	startMonth: number;
-	startDay: number;
+	start: Start;
 }
 
 const fromMonday = (monday: Date): WeeklyNote => {
@@ -19,9 +23,11 @@ const fromMonday = (monday: Date): WeeklyNote => {
 	sunday.setDate(monday.getDate() + 6);
 	return {
 		name: `${toMMdd(monday)}-${toMMdd(sunday)}.md`,
-		startYear: monday.getFullYear(),
-		startMonth: monday.getMonth() + 1,
-		startDay: monday.getDate(),
+		start: {
+			Year: monday.getFullYear(),
+			Month: monday.getMonth() + 1,
+			Day: monday.getDate(),
+		},
 	};
 };
 
@@ -79,9 +85,9 @@ const fillTemplate = (template: string, note: WeeklyNote): string => {
 	];
 	["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach((day, i) => {
 		const d = new Date(
-			note.startYear,
-			note.startMonth - 1,
-			note.startDay + i
+			note.start.Year,
+			note.start.Month - 1,
+			note.start.Day + i
 		);
 		const mon = abbrs[d.getMonth()];
 		const dd = String(d.getDate()).padStart(2, "0");

@@ -27,7 +27,7 @@ const fromName = (app: App, name: string): string | undefined => {
 	return;
 };
 
-const COMMAND_MakeNotes = "ノートを作る";
+const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenWeeklyNote = "今週のノートを開く";
 
 /*
@@ -56,7 +56,7 @@ export default class WeeklyNote extends Plugin {
 					return true;
 				}
 				const note = getNoteByWeek(0);
-				const notePath = `${note.startYear}/${note.name}`;
+				const notePath = `${note.start.Year}/${note.name}`;
 				if (this.app.vault.getFileByPath(notePath)) {
 					this.app.workspace.openLinkText(notePath, "", false);
 				} else {
