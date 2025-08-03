@@ -13,23 +13,28 @@ interface Start {
 	Day: number;
 }
 
-interface WeeklyNote {
+interface Note {
 	name: string;
 	start: Start;
 }
 
-const fromMonday = (monday: Date): WeeklyNote => {
-	const sunday = new Date(monday);
-	sunday.setDate(monday.getDate() + 6);
-	return {
-		name: `${toMMdd(monday)}-${toMMdd(sunday)}.md`,
-		start: {
+class WeeklyNote implements Note {
+	readonly name: string;
+	readonly start: Start;
+	constructor(monday: Date) {
+		const sunday = new Date(monday);
+		sunday.setDate(monday.getDate() + 6);
+		this.name = `${toMMdd(monday)}-${toMMdd(sunday)}.md`;
+		this.start = {
 			Year: monday.getFullYear(),
 			Month: monday.getMonth() + 1,
 			Day: monday.getDate(),
-		},
-	};
-};
+		};
+	}
+	get path(): string {
+		return `${this.start.Year}/${this.name}`;
+	}
+}
 
 const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 	const startDate = new Date(`${yyyy}-01-01`);
@@ -39,7 +44,7 @@ const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 	const notes: WeeklyNote[] = [];
 	let monday = firstMonday;
 	while (monday.getFullYear() === yyyy) {
-		const note = fromMonday(monday);
+		const note = new WeeklyNote(monday);
 		notes.push(note);
 		monday.setDate(monday.getDate() + 7);
 	}
@@ -48,11 +53,15 @@ const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 
 const noteTemplate = async (app: App, path: string): Promise<string> => {
 	if (path) {
+		if (!path.endsWith(".md")) {
+			path += ".md";
+		}
 		const note = app.vault.getAbstractFileByPath(path);
 		if (note && note instanceof TFile) {
 			return app.vault.read(note).then((content) => content);
 		}
 	}
+	new Notice(`Template path "${path}" not found. Default template is used.`);
 	return Promise.resolve(
 		[
 			"月 {{Mon}}\n",
@@ -142,19 +151,22 @@ export class NoteMakerModal extends Modal {
 		const notes = weeklyNotes(y);
 		for (let i = 0; i < notes.length; i++) {
 			const note = notes[i];
-			const notePath = folderPath + note.name;
+			const notePath = note.path;
 			if (this.app.vault.getFileByPath(notePath)) {
 				new Notice(`${notePath} already exists.`);
 			} else {
 				const t = this.template || "";
-				const navs = []
+				const navs = [];
 				if (0 < i) {
-					navs.push(`[[${notes[i - 1].name}|back]]`)
+					navs.push(`[[${notes[i - 1].name}|prev]]`);
 				}
 				if (i < notes.length - 1) {
-					navs.push(`[[${notes[i + 1].name}|next]]`)
+					navs.push(`[[${notes[i + 1].name}|next]]`);
 				}
-				await this.app.vault.create(notePath, fillTemplate(`${navs.join("  |  ")}\n\n${t}`, note));
+				await this.app.vault.create(
+					notePath,
+					fillTemplate(`${navs.join("  |  ")}\n\n${t}`, note)
+				);
 			}
 		}
 		this.close();
@@ -171,5 +183,6 @@ export const getNoteByWeek = (weekDelta: number): WeeklyNote => {
 	const dayOfWeek = now.getDay();
 	const monday = new Date(now);
 	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * weekDelta);
-	return fromMonday(monday);
+	const note = new WeeklyNote(monday);
+	return note;
 };

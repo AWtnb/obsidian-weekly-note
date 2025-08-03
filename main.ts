@@ -1,43 +1,24 @@
-import { App, Plugin, Notice, TFolder } from "obsidian";
+import { App, Plugin, Notice, Setting, PluginSettingTab } from "obsidian";
 
 import { NoteMakerModal, getNoteByWeek } from "Modals/Notemaker";
-
-/* 
-ノート名（ファイル名）からパスを取得する。
-rootにあればnameをそのまま返す。
-hogeというフォルダ内であればhoge/nameというようにスラッシュ区切りでパスを返す
-*/
-const fromName = (app: App, name: string): string | undefined => {
-	const vault = app.vault;
-	const root = vault.getRoot();
-	if (vault.getFileByPath(name)) {
-		return name;
-	}
-	const folders = vault
-		.getAllLoadedFiles()
-		.filter((file) => file instanceof TFolder && file.name === name);
-	if (folders.length > 0) {
-		const folder = folders[0];
-		const files = vault.getFiles().filter((file) => file.name === name);
-		if (files.length > 0) {
-			return folder.path + "/" + name;
-		}
-	}
-
-	return;
-};
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenWeeklyNote = "今週のノートを開く";
 
-/*
-icons
-https://lucide.dev/icons/
-https://docs.obsidian.md/Plugins/User+interface/Icons#Browse+available+icons
-*/
+interface WeeklyNoteSettings {
+	templatePath: string;
+}
 
-export default class WeeklyNote extends Plugin {
+const DEFAULT_SETTINGS: WeeklyNoteSettings = {
+	templatePath: "",
+};
+
+export default class WeeklyNotePlugin extends Plugin {
+	settings: WeeklyNoteSettings;
+
 	async onload() {
+		await this.loadSettings();
+
 		this.addCommand({
 			id: "weeklynote-make-notes",
 			name: COMMAND_MakeNotes,
@@ -45,7 +26,7 @@ export default class WeeklyNote extends Plugin {
 				if (checking) {
 					return true;
 				}
-				new NoteMakerModal(this.app).open();
+				new NoteMakerModal(this.app, this.settings.templatePath).open();
 			},
 		});
 		this.addCommand({
@@ -56,7 +37,7 @@ export default class WeeklyNote extends Plugin {
 					return true;
 				}
 				const note = getNoteByWeek(0);
-				const notePath = `${note.start.Year}/${note.name}`;
+				const notePath = note.path;
 				if (this.app.vault.getFileByPath(notePath)) {
 					this.app.workspace.openLinkText(notePath, "", false);
 				} else {
@@ -64,7 +45,48 @@ export default class WeeklyNote extends Plugin {
 				}
 			},
 		});
+		this.addSettingTab(new WeeklyNoteSettingTab(this.app, this));
 	}
 
 	onunload() {}
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+}
+
+class WeeklyNoteSettingTab extends PluginSettingTab {
+	plugin: WeeklyNotePlugin;
+
+	constructor(app: App, plugin: WeeklyNotePlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const { containerEl } = this;
+
+		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName("Template path")
+			.setDesc(
+				"Path of template file for weekly note. `{{Mon}}` and `{{Tue}}` will be converted to dates like `Jan. 01` and `Jan. 02`."
+			)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.templatePath)
+					.onChange(async (value) => {
+						this.plugin.settings.templatePath = value;
+						await this.plugin.saveSettings();
+					})
+			);
+	}
 }
