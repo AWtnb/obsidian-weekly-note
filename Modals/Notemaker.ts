@@ -7,20 +7,15 @@ const toMMdd = (date: Date): string => {
 	);
 };
 
-interface Start {
+interface StartOfWeek {
 	Year: number;
 	Month: number;
 	Day: number;
 }
 
-interface Note {
-	name: string;
-	start: Start;
-}
-
-class WeeklyNote implements Note {
+class WeeklyNote {
 	readonly name: string;
-	readonly start: Start;
+	readonly start: StartOfWeek;
 	constructor(monday: Date) {
 		const sunday = new Date(monday);
 		sunday.setDate(monday.getDate() + 6);
@@ -51,7 +46,20 @@ const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 	return notes;
 };
 
+const DEFAULT_TEMPLATE = [
+	"月 {{Mon}}\n",
+	"火 {{Tue}}\n",
+	"水 {{Wed}}\n",
+	"木 {{Thu}}\n",
+	"金 {{Fri}}\n",
+	"土 {{Sat}}\n",
+	"日 {{Sun}}\n",
+	"---",
+	"# Todo\n\n- ",
+].join("\n");
+
 const noteTemplate = async (app: App, path: string): Promise<string> => {
+	path = path.trim();
 	if (path) {
 		if (!path.endsWith(".md")) {
 			path += ".md";
@@ -61,20 +69,12 @@ const noteTemplate = async (app: App, path: string): Promise<string> => {
 			return app.vault.read(note).then((content) => content);
 		}
 	}
-	new Notice(`Template path "${path}" not found. Default template is used.`);
-	return Promise.resolve(
-		[
-			"月 {{Mon}}\n",
-			"火 {{Tue}}\n",
-			"水 {{Wed}}\n",
-			"木 {{Thu}}\n",
-			"金 {{Fri}}\n",
-			"土 {{Sat}}\n",
-			"日 {{Sun}}\n",
-			"---",
-			"# Todo\n\n- ",
-		].join("\n")
-	);
+	const msg =
+		path.length < 1
+			? "Template is not specified in setting tab."
+			: `Template path "${path}" not found.`;
+	new Notice(`${msg} Default template is used.`);
+	return Promise.resolve(DEFAULT_TEMPLATE);
 };
 
 const fillTemplate = (template: string, note: WeeklyNote): string => {
