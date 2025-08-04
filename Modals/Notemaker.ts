@@ -29,7 +29,32 @@ class WeeklyNote {
 	get path(): string {
 		return `${this.start.Year}/${this.name}`;
 	}
+	getNext(): WeeklyNote {
+		const nextMonday = new Date(
+			this.start.Year,
+			this.start.Month - 1,
+			this.start.Day + 7
+		);
+		return new WeeklyNote(nextMonday);
+	}
 }
+
+const activeNote = (app: App): WeeklyNote | null => {
+	const file = app.workspace.getActiveFile();
+	if (!file) return null;
+	const pathElems = file.path.split("/");
+	if (pathElems.length < 2) return null;
+	const folder = pathElems.at(-2);
+	if (!folder) return null;
+	if (!/^\d{4}/.test(folder)) return null;
+	const name = pathElems.at(-1);
+	if (!name) return null;
+	if (!/^\d{4}/.test(name)) return null;
+	const mm = name.substring(0, 2);
+	const dd = name.substring(2, 4);
+	const monday = new Date(Number(folder), Number(mm), Number(dd));
+	return new WeeklyNote(monday);
+};
 
 const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 	const startDate = new Date(`${yyyy}-01-01`);
@@ -64,7 +89,7 @@ const noteTemplate = async (app: App, path: string): Promise<string> => {
 		if (!path.endsWith(".md")) {
 			path += ".md";
 		}
-		const note = app.vault.getAbstractFileByPath(path);
+		const note = app.vault.getFileByPath(path);
 		if (note && note instanceof TFile) {
 			return app.vault.read(note).then((content) => content);
 		}

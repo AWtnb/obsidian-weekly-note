@@ -1,4 +1,11 @@
-import { App, Plugin, Notice, Setting, PluginSettingTab } from "obsidian";
+import {
+	App,
+	Plugin,
+	Notice,
+	Setting,
+	PluginSettingTab,
+	TFile,
+} from "obsidian";
 
 import { NoteMakerModal, getNoteByWeek } from "Modals/Notemaker";
 
@@ -11,6 +18,17 @@ interface WeeklyNoteSettings {
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	templatePath: "",
+};
+
+const appendToFile = async (
+	app: App,
+	filePath: string,
+	content: string
+): Promise<void> => {
+	const file = app.vault.getFileByPath(filePath);
+	if (file instanceof TFile) {
+		await app.vault.append(file, content);
+	}
 };
 
 export default class WeeklyNotePlugin extends Plugin {
