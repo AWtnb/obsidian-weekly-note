@@ -1,16 +1,20 @@
 import {
 	App,
-	Plugin,
+	Editor,
+	MarkdownView,
 	Notice,
-	Setting,
+	Plugin,
 	PluginSettingTab,
+	Setting,
 	TFile,
 } from "obsidian";
 
-import { NoteMakerModal, getNoteByWeek } from "Modals/Notemaker";
+import { NoteMakerModal, viewingNote, getNoteByWeek } from "Modals/Notemaker";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
-const COMMAND_OpenWeeklyNote = "今週のノートを開く";
+const COMMAND_OpenNote = "今週のノートを開く";
+const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
+const COMMAND_SendToNextNote = "次のノートに送る";
 
 interface WeeklyNoteSettings {
 	templatePath: string;
@@ -18,6 +22,11 @@ interface WeeklyNoteSettings {
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	templatePath: "",
+};
+
+const checkFile = (app: App, path: string): boolean => {
+	const file = app.vault.getFileByPath(path);
+	return file instanceof TFile;
 };
 
 const appendToFile = async (
@@ -28,7 +37,22 @@ const appendToFile = async (
 	const file = app.vault.getFileByPath(filePath);
 	if (file instanceof TFile) {
 		await app.vault.append(file, content);
+		new Notice(`Appended to: ${filePath}`);
+	} else {
+		new Notice(`ERROR: Note not found: ${filePath}`);
 	}
+};
+
+const getSelectedText = (editor: Editor): string => {
+	const cursorTop = editor.getCursor("from").line;
+	const cursorBottom = editor.getCursor("to").line;
+	if (cursorTop == cursorBottom) {
+		return editor.getLine(cursorTop);
+	}
+	return editor.getRange(
+		{ line: cursorTop, ch: 0 },
+		{ line: cursorBottom, ch: editor.getLine(cursorBottom).length }
+	);
 };
 
 export default class WeeklyNotePlugin extends Plugin {
@@ -47,9 +71,10 @@ export default class WeeklyNotePlugin extends Plugin {
 				new NoteMakerModal(this.app, this.settings.templatePath).open();
 			},
 		});
+
 		this.addCommand({
 			id: "weeklynote-open-note",
-			name: COMMAND_OpenWeeklyNote,
+			name: COMMAND_OpenNote,
 			checkCallback: (checking: boolean) => {
 				if (checking) {
 					return true;
@@ -63,6 +88,32 @@ export default class WeeklyNotePlugin extends Plugin {
 				}
 			},
 		});
+
+		this.addCommand({
+			id: "weeklynote-send-to-next-note",
+			name: COMMAND_SendToNextNote,
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const note = viewingNote(view);
+				if (!note) return;
+				const t = getSelectedText(editor);
+				if (t.length < 1) return;
+				const nextPath = note.getNext().path;
+				appendToFile(this.app, nextPath, t);
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-send-to-note-of-next-week",
+			name: COMMAND_SendToNoteOfNextWeek,
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const note = getNoteByWeek(1);
+				if (!note) return;
+				const t = getSelectedText(editor);
+				if (t.length < 1) return;
+				appendToFile(this.app, note.path, t);
+			},
+		});
+
 		this.addSettingTab(new WeeklyNoteSettingTab(this.app, this));
 	}
 

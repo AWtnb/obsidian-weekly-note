@@ -1,4 +1,4 @@
-import { App, Modal, TFile, Notice } from "obsidian";
+import { App, Modal, TFile, Notice, MarkdownView } from "obsidian";
 
 const toMMdd = (date: Date): string => {
 	return (
@@ -39,8 +39,8 @@ class WeeklyNote {
 	}
 }
 
-const activeNote = (app: App): WeeklyNote | null => {
-	const file = app.workspace.getActiveFile();
+export const viewingNote = (view: MarkdownView): WeeklyNote | null => {
+	const file = view.file;
 	if (!file) return null;
 	const pathElems = file.path.split("/");
 	if (pathElems.length < 2) return null;
@@ -52,8 +52,9 @@ const activeNote = (app: App): WeeklyNote | null => {
 	if (!/^\d{4}/.test(name)) return null;
 	const mm = name.substring(0, 2);
 	const dd = name.substring(2, 4);
-	const monday = new Date(Number(folder), Number(mm), Number(dd));
-	return new WeeklyNote(monday);
+	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
+	const note = new WeeklyNote(monday);
+	return note;
 };
 
 const weeklyNotes = (yyyy: number): WeeklyNote[] => {
@@ -80,7 +81,7 @@ const DEFAULT_TEMPLATE = [
 	"土 {{Sat}}\n",
 	"日 {{Sun}}\n",
 	"---",
-	"# Todo\n\n- ",
+	"# Todo\n\n",
 ].join("\n");
 
 const noteTemplate = async (app: App, path: string): Promise<string> => {
