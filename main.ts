@@ -9,10 +9,17 @@ import {
 	TFile,
 } from "obsidian";
 
-import { NoteMakerModal, viewingNote, getNoteByWeek } from "Modals/Notemaker";
+import {
+	NoteMakerModal,
+	viewingNote,
+	getNoteByWeek,
+	fromPath,
+} from "Modals/Notemaker";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
+const COMMAND_OpenNoteOfNextWeek = "来週のノートを開く";
+const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
 const COMMAND_SendToNextNote = "次のノートに送る";
 
@@ -24,9 +31,10 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	templatePath: "",
 };
 
-const checkFile = (app: App, path: string): boolean => {
-	const file = app.vault.getFileByPath(path);
-	return file instanceof TFile;
+const noticeInvalidNotePath = (path: string) => {
+	const s = `ERROR: "${path}" not found!`;
+	new Notice(s);
+	console.log(s);
 };
 
 const appendToFile = async (
@@ -39,7 +47,7 @@ const appendToFile = async (
 		await app.vault.append(file, content);
 		new Notice(`Appended to: ${filePath}`);
 	} else {
-		new Notice(`ERROR: Note not found: ${filePath}`);
+		noticeInvalidNotePath(filePath);
 	}
 };
 
@@ -64,7 +72,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-make-notes",
 			name: COMMAND_MakeNotes,
-			checkCallback: (checking: boolean) => {
+			checkCallback: (checking: boolean): boolean | void => {
 				if (checking) {
 					return true;
 				}
@@ -75,7 +83,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-open-note",
 			name: COMMAND_OpenNote,
-			checkCallback: (checking: boolean) => {
+			checkCallback: (checking: boolean): boolean | void => {
 				if (checking) {
 					return true;
 				}
@@ -84,7 +92,48 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (this.app.vault.getFileByPath(notePath)) {
 					this.app.workspace.openLinkText(notePath, "", false);
 				} else {
-					new Notice(`"${notePath}" not found!`);
+					noticeInvalidNotePath(notePath);
+				}
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-open-next-note",
+			name: COMMAND_OpenNextNote,
+			checkCallback: (checking: boolean): boolean | void => {
+				if (checking) {
+					return true;
+				}
+				const view =
+					this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (!view) return;
+				const file = view.file;
+				if (!file) return;
+				const note = fromPath(file.path);
+				if (!note) return;
+				const next = note.getNext();
+				const nextPath = next.path;
+				if (this.app.vault.getFileByPath(nextPath)) {
+					this.app.workspace.openLinkText(nextPath, "", false);
+				} else {
+					noticeInvalidNotePath(nextPath);
+				}
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-open-note-of-next-week",
+			name: COMMAND_OpenNoteOfNextWeek,
+			checkCallback: (checking: boolean): boolean | void => {
+				if (checking) {
+					return true;
+				}
+				const next = getNoteByWeek(1);
+				const nextPath = next.path;
+				if (this.app.vault.getFileByPath(nextPath)) {
+					this.app.workspace.openLinkText(nextPath, "", false);
+				} else {
+					noticeInvalidNotePath(nextPath);
 				}
 			},
 		});
@@ -92,7 +141,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-send-to-next-note",
 			name: COMMAND_SendToNextNote,
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				const note = viewingNote(view);
 				if (!note) return;
 				const t = getSelectedText(editor);
@@ -105,7 +154,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-send-to-note-of-next-week",
 			name: COMMAND_SendToNoteOfNextWeek,
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				const note = getNoteByWeek(1);
 				if (!note) return;
 				const t = getSelectedText(editor);

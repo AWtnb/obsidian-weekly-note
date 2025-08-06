@@ -39,10 +39,8 @@ class WeeklyNote {
 	}
 }
 
-export const viewingNote = (view: MarkdownView): WeeklyNote | null => {
-	const file = view.file;
-	if (!file) return null;
-	const pathElems = file.path.split("/");
+export const fromPath = (path: string): WeeklyNote | null => {
+	const pathElems = path.split("/");
 	if (pathElems.length < 2) return null;
 	const folder = pathElems.at(-2);
 	if (!folder) return null;
@@ -55,6 +53,12 @@ export const viewingNote = (view: MarkdownView): WeeklyNote | null => {
 	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
 	const note = new WeeklyNote(monday);
 	return note;
+};
+
+export const viewingNote = (view: MarkdownView): WeeklyNote | null => {
+	const file = view.file;
+	if (!file) return null;
+	return fromPath(file.path);
 };
 
 const weeklyNotes = (yyyy: number): WeeklyNote[] => {
