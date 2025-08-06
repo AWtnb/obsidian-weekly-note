@@ -15,6 +15,7 @@ import {
 	getNoteByWeek,
 	fromPath,
 } from "Modals/Notemaker";
+import { SchedulerModal } from "Modals/Scheduler";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -22,6 +23,7 @@ const COMMAND_OpenNoteOfNextWeek = "来週のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
 const COMMAND_SendToNextNote = "次のノートに送る";
+const COMMAND_Schedule = "スケジュール追加";
 
 interface WeeklyNoteSettings {
 	templatePath: string;
@@ -160,6 +162,14 @@ export default class WeeklyNotePlugin extends Plugin {
 				const t = getSelectedText(editor);
 				if (t.length < 1) return;
 				appendToFile(this.app, note.path, t);
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-schedule",
+			name: COMMAND_Schedule,
+			editorCallback: (editor: Editor, view: MarkdownView): void => {
+				new SchedulerModal(this.app, editor, view).open();
 			},
 		});
 
