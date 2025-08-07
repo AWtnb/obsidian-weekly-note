@@ -173,9 +173,8 @@ export class NoteMakerModal extends Modal {
 			return;
 		}
 
-		const folderPath = `${yyyy}/`;
-		if (!this.app.vault.getFolderByPath(folderPath)) {
-			await this.app.vault.createFolder(folderPath);
+		if (!this.app.vault.getFolderByPath(yyyy)) {
+			await this.app.vault.createFolder(yyyy);
 		}
 
 		const notes = weeklyNotes(y);
