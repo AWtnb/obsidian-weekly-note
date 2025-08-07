@@ -1,15 +1,9 @@
 import { App, Modal, Editor, MarkdownView } from "obsidian";
 
 const orderLines = (a: string, b: string): string => {
-	if (a.length < 1 || b.length < 1) {
-		return a + b;
-	}
-	const aIdx = a.substring(2, 4);
-	const bIdx = b.substring(2, 4);
-	if (aIdx < bIdx) {
-		return [a, b].join("\n");
-	}
-	return [b, a].join("\n");
+	if (!a) return b;
+	if (!b) return a;
+	return [a, b].sort().join("\n");
 };
 
 export class SchedulerModal extends Modal {
