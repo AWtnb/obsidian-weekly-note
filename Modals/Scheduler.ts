@@ -1,5 +1,17 @@
 import { App, Modal, Editor, MarkdownView } from "obsidian";
 
+const orderLines = (a: string, b: string): string => {
+	if (a.length < 1 || b.length < 1) {
+		return a + b;
+	}
+	const aIdx = a.substring(2, 4);
+	const bIdx = b.substring(2, 4);
+	if (aIdx < bIdx) {
+		return [a, b].join("\n");
+	}
+	return [b, a].join("\n");
+};
+
 export class SchedulerModal extends Modal {
 	private readonly editor: Editor;
 	private readonly view: MarkdownView;
@@ -21,11 +33,9 @@ export class SchedulerModal extends Modal {
 		const startTime = contentEl
 			.createEl("label", { text: "start" })
 			.createEl("input", { type: "number" });
-		startTime.addClass("time");
 		const endTime = contentEl
 			.createEl("label", { text: "end" })
 			.createEl("input", { type: "number" });
-		startTime.addClass("time");
 		const schedule = contentEl
 			.createEl("label", { text: "schedule" })
 			.createEl("input", { type: "text" });
@@ -37,9 +47,18 @@ export class SchedulerModal extends Modal {
 			if (schedule.value.length < 1 || startTime.value.length < 1) {
 				return;
 			}
-			const scheduleLine = `- ${startTime.value}-${endTime.value} ${schedule.value}`;
+			let scheduleLine = `- ${startTime.value}`;
+			if (0 < endTime.value.length) {
+				scheduleLine += `-${endTime.value} `;
+			} else {
+				scheduleLine += "- ";
+			}
+			scheduleLine += schedule.value;
 			const cursor = this.editor.getCursor();
-			this.editor.setLine(cursor.line, scheduleLine);
+			this.editor.setLine(
+				cursor.line,
+				orderLines(scheduleLine, this.editor.getLine(cursor.line))
+			);
 			this.editor.setCursor(cursor.line, scheduleLine.length);
 			this.close();
 		};

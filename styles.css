@@ -1,5 +1,15 @@
 #note-maker-modal input {
 	display: block;
 	height: var(--input-height);
-    margin: 8px 0;
+	margin: 8px 0;
+}
+
+#schedule-modal label,
+#schedule-modal input {
+	display: block;
+	margin: 8px 0;
+}
+
+#schedule-modal input[type="text"] {
+	width: 100%;
 }
