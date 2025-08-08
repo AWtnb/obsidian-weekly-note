@@ -88,26 +88,33 @@ const DEFAULT_TEMPLATE = [
 	"# Todo\n\n",
 ].join("\n");
 
-const noteTemplate = async (app: App, path: string): Promise<string> => {
-	path = path.trim();
-	if (path) {
-		if (!path.endsWith(".md")) {
-			path += ".md";
-		}
-		const note = app.vault.getFileByPath(path);
-		if (note && note instanceof TFile) {
-			return app.vault.read(note).then((content) => content);
-		}
+const readNote = async (app: App, path: string): Promise<string | null> => {
+	if (!path.endsWith(".md")) {
+		path += ".md";
 	}
-	const msg =
-		path.length < 1
-			? "Template is not specified in setting tab."
-			: `Template path "${path}" not found.`;
-	new Notice(`${msg} Default template is used.`);
-	return Promise.resolve(DEFAULT_TEMPLATE);
+	const note = app.vault.getFileByPath(path);
+	if (note && note instanceof TFile) {
+		return app.vault.read(note).then((content) => content);
+	}
+	return Promise.resolve(null);
 };
 
-const fillTemplate = (template: string, note: WeeklyNote): string => {
+const noteTemplate = async (app: App, path: string): Promise<string> => {
+	const template = await readNote(app, path);
+	if (template == null) {
+		new Notice(
+			`Template path "${path}" not found. Default template is used.`
+		);
+		return DEFAULT_TEMPLATE;
+	}
+	return template;
+};
+
+const fillTemplate = (
+	template: string,
+	holidays: string[],
+	note: WeeklyNote
+): string => {
 	const abbrs = [
 		"Jan",
 		"Feb",
@@ -131,19 +138,36 @@ const fillTemplate = (template: string, note: WeeklyNote): string => {
 		const mon = abbrs[d.getMonth()];
 		const dd = String(d.getDate()).padStart(2, "0");
 		const regex = new RegExp(`{{${day}}}`, "g");
-		template = template.replace(regex, `${mon}. ${dd}`);
+		let date = `${mon}. ${dd}`;
+		const ymd =
+			`${d.getFullYear()}-` +
+			String(d.getMonth() + 1).padStart(2, "0") +
+			`-${String(d.getDate()).padStart(2, "0")}`;
+		if (holidays.includes(ymd)) {
+			date = `${date} 休`;
+		}
+		template = template.replace(regex, date);
 	});
 	return template;
 };
 
 export class NoteMakerModal extends Modal {
-	private template: string | undefined;
+	private template: string;
+	private holidays: string[];
 
-	constructor(app: App, templatePath: string = "") {
+	constructor(app: App, templatePath: string, holidays: string[]) {
 		super(app);
-		noteTemplate(app, templatePath).then((t) => {
-			this.template = t;
-		});
+
+		if (templatePath.length < 1) {
+			new Notice("Template is unspecified. Default template is used.");
+			this.template = DEFAULT_TEMPLATE;
+		} else {
+			noteTemplate(app, templatePath).then((t) => {
+				this.template = t;
+			});
+		}
+
+		this.holidays = holidays;
 	}
 
 	onOpen() {
@@ -192,9 +216,10 @@ export class NoteMakerModal extends Modal {
 				if (i < notes.length - 1) {
 					navs.push(`[[${notes[i + 1].name}|next]]`);
 				}
+				const nav = `${navs.join("  |  ")}\n\n`;
 				await this.app.vault.create(
 					notePath,
-					fillTemplate(`${navs.join("  |  ")}\n\n${t}`, note)
+					nav + fillTemplate(t, this.holidays, note)
 				);
 			}
 		}

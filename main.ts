@@ -25,14 +25,6 @@ const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_Schedule = "スケジュール追加";
 
-interface WeeklyNoteSettings {
-	templatePath: string;
-}
-
-const DEFAULT_SETTINGS: WeeklyNoteSettings = {
-	templatePath: "",
-};
-
 const noticeInvalidNotePath = (path: string) => {
 	const s = `ERROR: "${path}" not found!`;
 	new Notice(s);
@@ -65,6 +57,15 @@ const getSelectedText = (editor: Editor): string => {
 	);
 };
 
+interface WeeklyNoteSettings {
+	templatePath: string;
+	holidays: string[];
+}
+
+const DEFAULT_SETTINGS: WeeklyNoteSettings = {
+	templatePath: "",
+	holidays: [],
+};
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
@@ -78,7 +79,11 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (checking) {
 					return true;
 				}
-				new NoteMakerModal(this.app, this.settings.templatePath).open();
+				new NoteMakerModal(
+					this.app,
+					this.settings.templatePath,
+					this.settings.holidays
+				).open();
 			},
 		});
 
@@ -177,6 +182,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	}
 
 	onunload() {}
+
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
@@ -213,6 +219,21 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.templatePath)
 					.onChange(async (value) => {
 						this.plugin.settings.templatePath = value;
+						await this.plugin.saveSettings();
+					})
+			);
+		new Setting(containerEl)
+			.setName("Holidays")
+			.setDesc(
+				"Specify holidays in yyyy-MM-dd format, separated by lines."
+			)
+			.addTextArea((textarea) =>
+				textarea
+					.setValue(this.plugin.settings.holidays.join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.holidays = value
+							.split("\n")
+							.filter((line) => line.trim());
 						await this.plugin.saveSettings();
 					})
 			);
