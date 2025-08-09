@@ -61,11 +61,13 @@ const getSelectedText = (editor: Editor): string => {
 interface WeeklyNoteSettings {
 	template: string;
 	holidays: string[];
+	holidaySuffix: string;
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	template: DEFAULT_TEMPLATE,
 	holidays: ["2025-01-01", "2026-01-01", "2027-01-01"],
+	holidaySuffix: " 休",
 };
 
 export default class WeeklyNotePlugin extends Plugin {
@@ -84,7 +86,8 @@ export default class WeeklyNotePlugin extends Plugin {
 				new NoteMakerModal(
 					this.app,
 					this.settings.template,
-					this.settings.holidays
+					this.settings.holidays,
+					this.settings.holidaySuffix
 				).open();
 			},
 		});
@@ -210,6 +213,7 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
 		new Setting(containerEl)
 			.setName("Template")
 			.setDesc(
@@ -241,6 +245,7 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 						if (value.length < 1) {
 							this.plugin.settings.holidays =
 								DEFAULT_SETTINGS.holidays;
+							await this.plugin.saveSettings();
 							return;
 						}
 						this.plugin.settings.holidays = value
@@ -250,5 +255,22 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 					})
 			)
 			.setClass("weeklynote-setting-box");
+
+		new Setting(containerEl)
+			.setName("Suffix for holiday")
+			.setDesc("Suffix for holiday.")
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.holidaySuffix)
+					.setPlaceholder(DEFAULT_SETTINGS.holidaySuffix)
+					.onChange(async (value) => {
+						const suffix =
+							value.length < 1
+								? DEFAULT_SETTINGS.holidaySuffix
+								: value;
+						this.plugin.settings.holidaySuffix = suffix;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

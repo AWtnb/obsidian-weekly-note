@@ -88,31 +88,10 @@ export const DEFAULT_TEMPLATE = [
 	"# Todo\n\n",
 ].join("\n");
 
-// const readNote = async (app: App, path: string): Promise<string | null> => {
-// 	if (!path.endsWith(".md")) {
-// 		path += ".md";
-// 	}
-// 	const note = app.vault.getFileByPath(path);
-// 	if (note && note instanceof TFile) {
-// 		return app.vault.read(note).then((content) => content);
-// 	}
-// 	return Promise.resolve(null);
-// };
-
-// const noteTemplate = async (app: App, path: string): Promise<string> => {
-// 	const template = await readNote(app, path);
-// 	if (template == null) {
-// 		new Notice(
-// 			`Template path "${path}" not found. Default template is used.`
-// 		);
-// 		return DEFAULT_TEMPLATE;
-// 	}
-// 	return template;
-// };
-
 const fillTemplate = (
 	template: string,
 	holidays: string[],
+	holidaySuffix: string,
 	note: WeeklyNote
 ): string => {
 	const abbrs = [
@@ -144,7 +123,7 @@ const fillTemplate = (
 			String(d.getMonth() + 1).padStart(2, "0") +
 			`-${String(d.getDate()).padStart(2, "0")}`;
 		if (holidays.includes(ymd)) {
-			date = `${date} 休`;
+			date += holidaySuffix;
 		}
 		template = template.replace(regex, date);
 	});
@@ -154,11 +133,18 @@ const fillTemplate = (
 export class NoteMakerModal extends Modal {
 	private template: string;
 	private holidays: string[];
+	private holidaySuffix: string;
 
-	constructor(app: App, template: string, holidays: string[]) {
+	constructor(
+		app: App,
+		template: string,
+		holidays: string[],
+		holidaySuffix: string
+	) {
 		super(app);
 		this.template = template;
 		this.holidays = holidays;
+		this.holidaySuffix = holidaySuffix;
 	}
 
 	onOpen() {
@@ -210,7 +196,7 @@ export class NoteMakerModal extends Modal {
 				const nav = `${navs.join("  |  ")}\n\n`;
 				await this.app.vault.create(
 					notePath,
-					nav + fillTemplate(t, this.holidays, note)
+					nav + fillTemplate(t, this.holidays, this.holidaySuffix, note)
 				);
 			}
 		}
