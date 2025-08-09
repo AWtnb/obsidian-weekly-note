@@ -13,3 +13,14 @@
 #schedule-modal input[type="text"] {
 	width: 100%;
 }
+
+.weeklynote-setting-box {
+	width: 100%;
+}
+.weeklynote-setting-box .setting-item-info {
+	width: 40%;
+}
+.weeklynote-setting-box textarea {
+	min-height: 200px;
+	width: 100%;
+}

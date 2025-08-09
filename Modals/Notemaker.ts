@@ -76,7 +76,7 @@ const weeklyNotes = (yyyy: number): WeeklyNote[] => {
 	return notes;
 };
 
-const DEFAULT_TEMPLATE = [
+export const DEFAULT_TEMPLATE = [
 	"月 {{Mon}}\n",
 	"火 {{Tue}}\n",
 	"水 {{Wed}}\n",
@@ -88,27 +88,27 @@ const DEFAULT_TEMPLATE = [
 	"# Todo\n\n",
 ].join("\n");
 
-const readNote = async (app: App, path: string): Promise<string | null> => {
-	if (!path.endsWith(".md")) {
-		path += ".md";
-	}
-	const note = app.vault.getFileByPath(path);
-	if (note && note instanceof TFile) {
-		return app.vault.read(note).then((content) => content);
-	}
-	return Promise.resolve(null);
-};
+// const readNote = async (app: App, path: string): Promise<string | null> => {
+// 	if (!path.endsWith(".md")) {
+// 		path += ".md";
+// 	}
+// 	const note = app.vault.getFileByPath(path);
+// 	if (note && note instanceof TFile) {
+// 		return app.vault.read(note).then((content) => content);
+// 	}
+// 	return Promise.resolve(null);
+// };
 
-const noteTemplate = async (app: App, path: string): Promise<string> => {
-	const template = await readNote(app, path);
-	if (template == null) {
-		new Notice(
-			`Template path "${path}" not found. Default template is used.`
-		);
-		return DEFAULT_TEMPLATE;
-	}
-	return template;
-};
+// const noteTemplate = async (app: App, path: string): Promise<string> => {
+// 	const template = await readNote(app, path);
+// 	if (template == null) {
+// 		new Notice(
+// 			`Template path "${path}" not found. Default template is used.`
+// 		);
+// 		return DEFAULT_TEMPLATE;
+// 	}
+// 	return template;
+// };
 
 const fillTemplate = (
 	template: string,
@@ -155,18 +155,9 @@ export class NoteMakerModal extends Modal {
 	private template: string;
 	private holidays: string[];
 
-	constructor(app: App, templatePath: string, holidays: string[]) {
+	constructor(app: App, template: string, holidays: string[]) {
 		super(app);
-
-		if (templatePath.length < 1) {
-			new Notice("Template is unspecified. Default template is used.");
-			this.template = DEFAULT_TEMPLATE;
-		} else {
-			noteTemplate(app, templatePath).then((t) => {
-				this.template = t;
-			});
-		}
-
+		this.template = template;
 		this.holidays = holidays;
 	}
 

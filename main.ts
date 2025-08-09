@@ -14,6 +14,7 @@ import {
 	viewingNote,
 	getNoteByWeek,
 	fromPath,
+	DEFAULT_TEMPLATE,
 } from "Modals/Notemaker";
 import { SchedulerModal } from "Modals/Scheduler";
 
@@ -58,14 +59,15 @@ const getSelectedText = (editor: Editor): string => {
 };
 
 interface WeeklyNoteSettings {
-	templatePath: string;
+	template: string;
 	holidays: string[];
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
-	templatePath: "",
-	holidays: [],
+	template: DEFAULT_TEMPLATE,
+	holidays: ["2025-01-01", "2026-01-01", "2027-01-01"],
 };
+
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
@@ -81,7 +83,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				}
 				new NoteMakerModal(
 					this.app,
-					this.settings.templatePath,
+					this.settings.template,
 					this.settings.holidays
 				).open();
 			},
@@ -208,20 +210,24 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
 		new Setting(containerEl)
-			.setName("Template path")
+			.setName("Template")
 			.setDesc(
-				"Path of template file for weekly note. `{{Mon}}` and `{{Tue}}` will be converted to dates like `Jan. 01` and `Jan. 02`."
+				"Template for weekly note. `{{Mon}}` and `{{Tue}}` will be converted to dates like `Jan. 01` and `Jan. 02`."
 			)
-			.addText((text) =>
-				text
-					.setValue(this.plugin.settings.templatePath)
+			.addTextArea((textarea) =>
+				textarea
+					.setValue(this.plugin.settings.template)
+					.setPlaceholder(DEFAULT_TEMPLATE)
 					.onChange(async (value) => {
-						this.plugin.settings.templatePath = value;
+						const template =
+							value.length < 1 ? DEFAULT_TEMPLATE : value;
+						this.plugin.settings.template = template;
 						await this.plugin.saveSettings();
 					})
-			);
+			)
+			.setClass("weeklynote-setting-box");
+
 		new Setting(containerEl)
 			.setName("Holidays")
 			.setDesc(
@@ -230,12 +236,19 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 			.addTextArea((textarea) =>
 				textarea
 					.setValue(this.plugin.settings.holidays.join("\n"))
+					.setPlaceholder(DEFAULT_SETTINGS.holidays.join("\n"))
 					.onChange(async (value) => {
+						if (value.length < 1) {
+							this.plugin.settings.holidays =
+								DEFAULT_SETTINGS.holidays;
+							return;
+						}
 						this.plugin.settings.holidays = value
 							.split("\n")
 							.filter((line) => line.trim());
 						await this.plugin.saveSettings();
 					})
-			);
+			)
+			.setClass("weeklynote-setting-box");
 	}
 }
