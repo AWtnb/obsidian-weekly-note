@@ -102,7 +102,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = getNoteByWeek(0);
 				const notePath = note.path;
 				if (this.app.vault.getFileByPath(notePath)) {
-					this.app.workspace.openLinkText(notePath, "", false);
+					this.app.workspace.openLinkText("", notePath, true);
 				} else {
 					noticeInvalidNotePath(notePath);
 				}
@@ -126,7 +126,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const next = note.getNext();
 				const nextPath = next.path;
 				if (this.app.vault.getFileByPath(nextPath)) {
-					this.app.workspace.openLinkText(nextPath, "", false);
+					this.app.workspace.openLinkText("", nextPath, true);
 				} else {
 					noticeInvalidNotePath(nextPath);
 				}
@@ -143,7 +143,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const next = getNoteByWeek(1);
 				const nextPath = next.path;
 				if (this.app.vault.getFileByPath(nextPath)) {
-					this.app.workspace.openLinkText(nextPath, "", false);
+					this.app.workspace.openLinkText("", nextPath, true);
 				} else {
 					noticeInvalidNotePath(nextPath);
 				}
