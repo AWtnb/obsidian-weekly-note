@@ -25,6 +25,7 @@ const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_Schedule = "スケジュール追加";
+const COMMAND_SelectListTree = "リスト以下を選択";
 
 const noticeInvalidNotePath = (path: string) => {
 	const s = `ERROR: "${path}" not found!`;
@@ -46,15 +47,50 @@ const appendToFile = async (
 	}
 };
 
+interface CursorEdge {
+	top: number;
+	bottom: number;
+}
+
+const getCursorEdge = (editor: Editor): CursorEdge => {
+	return {
+		top: editor.getCursor("from").line,
+		bottom: editor.getCursor("to").line,
+	};
+};
+
 const getSelectedText = (editor: Editor): string => {
-	const cursorTop = editor.getCursor("from").line;
-	const cursorBottom = editor.getCursor("to").line;
-	if (cursorTop == cursorBottom) {
-		return editor.getLine(cursorTop);
+	const edge = getCursorEdge(editor);
+	if (edge.top == edge.bottom) {
+		return editor.getLine(edge.top);
 	}
 	return editor.getRange(
-		{ line: cursorTop, ch: 0 },
-		{ line: cursorBottom, ch: editor.getLine(cursorBottom).length }
+		{ line: edge.top, ch: 0 },
+		{ line: edge.bottom, ch: editor.getLine(edge.bottom).length }
+	);
+};
+
+const selectListTree = (editor: Editor) => {
+	const edge = getCursorEdge(editor);
+
+	const baseLine = editor.getLine(edge.bottom);
+	const baseIndent = baseLine.length - baseLine.trimStart().length;
+	let selTop = edge.top;
+	let selBottom = edge.bottom;
+
+	const lines = editor.getValue().split("\n");
+	for (let i = edge.bottom + 1; i < lines.length; i++) {
+		const line = lines[i];
+		const indent = line.length - line.trimStart().length;
+		if (baseIndent < indent) {
+			selBottom = i;
+		} else {
+			break;
+		}
+	}
+	editor.setSelection(
+		{ line: selTop, ch: 0 },
+		{ line: selBottom, ch: editor.getLine(selBottom).length }
 	);
 };
 
@@ -180,6 +216,14 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_Schedule,
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				new SchedulerModal(this.app, editor, view).open();
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-select-list-tree",
+			name: COMMAND_SelectListTree,
+			editorCallback: (editor: Editor, _: MarkdownView): void => {
+				selectListTree(editor);
 			},
 		});
 
