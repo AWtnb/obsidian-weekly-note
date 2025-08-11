@@ -11,25 +11,22 @@ import {
 
 import {
 	NoteMakerModal,
-	viewingNote,
-	getNoteByWeek,
-	fromPath,
+	newWeeklyNote,
+	weeklyNoteFromPath,
 	DEFAULT_TEMPLATE,
 } from "Modals/Notemaker";
 import { SchedulerModal } from "Modals/Scheduler";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
-const COMMAND_OpenNoteOfNextWeek = "来週のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
-const COMMAND_SendToNoteOfNextWeek = "来週のノートに送る";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_Schedule = "スケジュール追加";
 const COMMAND_SelectListTree = "リスト以下を選択";
 
 const noticeInvalidNotePath = (path: string) => {
 	const s = `ERROR: "${path}" not found!`;
-	new Notice(s);
+	new Notice(s, 1000);
 	console.log(s);
 };
 
@@ -114,11 +111,9 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-make-notes",
+			icon: "calendar-plus",
 			name: COMMAND_MakeNotes,
-			checkCallback: (checking: boolean): boolean | void => {
-				if (checking) {
-					return true;
-				}
+			callback: () => {
 				new NoteMakerModal(
 					this.app,
 					this.settings.template,
@@ -131,11 +126,8 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-open-note",
 			name: COMMAND_OpenNote,
-			checkCallback: (checking: boolean): boolean | void => {
-				if (checking) {
-					return true;
-				}
-				const note = getNoteByWeek(0);
+			callback: () => {
+				const note = newWeeklyNote();
 				const notePath = note.path;
 				if (this.app.vault.getFileByPath(notePath)) {
 					this.app.workspace.openLinkText("", notePath, true);
@@ -148,35 +140,12 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addCommand({
 			id: "weeklynote-open-next-note",
 			name: COMMAND_OpenNextNote,
-			checkCallback: (checking: boolean): boolean | void => {
-				if (checking) {
-					return true;
-				}
-				const view =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (!view) return;
-				const file = view.file;
+			callback: () => {
+				const file = this.app.workspace.getActiveFile();
 				if (!file) return;
-				const note = fromPath(file.path);
+				const note = weeklyNoteFromPath(file.path);
 				if (!note) return;
 				const next = note.increment();
-				const nextPath = next.path;
-				if (this.app.vault.getFileByPath(nextPath)) {
-					this.app.workspace.openLinkText("", nextPath, true);
-				} else {
-					noticeInvalidNotePath(nextPath);
-				}
-			},
-		});
-
-		this.addCommand({
-			id: "weeklynote-open-note-of-next-week",
-			name: COMMAND_OpenNoteOfNextWeek,
-			checkCallback: (checking: boolean): boolean | void => {
-				if (checking) {
-					return true;
-				}
-				const next = getNoteByWeek(1);
 				const nextPath = next.path;
 				if (this.app.vault.getFileByPath(nextPath)) {
 					this.app.workspace.openLinkText("", nextPath, true);
@@ -190,24 +159,14 @@ export default class WeeklyNotePlugin extends Plugin {
 			id: "weeklynote-send-to-next-note",
 			name: COMMAND_SendToNextNote,
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
-				const note = viewingNote(view);
+				const file = view.file;
+				if (!file) return;
+				const note = weeklyNoteFromPath(file.path);
 				if (!note) return;
 				const t = getSelectedText(editor);
 				if (t.length < 1) return;
 				const nextPath = note.increment().path;
 				appendToFile(this.app, nextPath, t);
-			},
-		});
-
-		this.addCommand({
-			id: "weeklynote-send-to-note-of-next-week",
-			name: COMMAND_SendToNoteOfNextWeek,
-			editorCallback: (editor: Editor, view: MarkdownView): void => {
-				const note = getNoteByWeek(1);
-				if (!note) return;
-				const t = getSelectedText(editor);
-				if (t.length < 1) return;
-				appendToFile(this.app, note.path, t);
 			},
 		});
 

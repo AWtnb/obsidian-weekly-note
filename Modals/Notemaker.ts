@@ -1,4 +1,4 @@
-import { App, Modal, TFile, Notice, MarkdownView } from "obsidian";
+import { App, Modal, Notice, MarkdownView } from "obsidian";
 
 const toMMdd = (date: Date): string => {
 	return (
@@ -39,7 +39,16 @@ class WeeklyNote {
 	}
 }
 
-export const fromPath = (path: string): WeeklyNote | null => {
+export const newWeeklyNote = (weekDelta: number = 0): WeeklyNote => {
+	const now = new Date();
+	const dayOfWeek = now.getDay();
+	const monday = new Date(now);
+	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * weekDelta);
+	const note = new WeeklyNote(monday);
+	return note;
+};
+
+export const weeklyNoteFromPath = (path: string): WeeklyNote | null => {
 	const pathElems = path.split("/");
 	if (pathElems.length < 2) return null;
 	const folder = pathElems.at(-2);
@@ -53,12 +62,6 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
 	const note = new WeeklyNote(monday);
 	return note;
-};
-
-export const viewingNote = (view: MarkdownView): WeeklyNote | null => {
-	const file = view.file;
-	if (!file) return null;
-	return fromPath(file.path);
 };
 
 const weeklyNotes = (yyyy: number): WeeklyNote[] => {
@@ -196,7 +199,8 @@ export class NoteMakerModal extends Modal {
 				const nav = `${navs.join("  |  ")}\n\n`;
 				await this.app.vault.create(
 					notePath,
-					nav + fillTemplate(t, this.holidays, this.holidaySuffix, note)
+					nav +
+						fillTemplate(t, this.holidays, this.holidaySuffix, note)
 				);
 			}
 		}
@@ -208,12 +212,3 @@ export class NoteMakerModal extends Modal {
 		contentEl.empty();
 	}
 }
-
-export const getNoteByWeek = (weekDelta: number): WeeklyNote => {
-	const now = new Date();
-	const dayOfWeek = now.getDay();
-	const monday = new Date(now);
-	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * weekDelta);
-	const note = new WeeklyNote(monday);
-	return note;
-};
