@@ -125,6 +125,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-open-note",
+			icon: "calendar-fold",
 			name: COMMAND_OpenNote,
 			callback: () => {
 				const note = newWeeklyNote();
@@ -139,6 +140,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-open-next-note",
+			icon: "square-arrow-right",
 			name: COMMAND_OpenNextNote,
 			callback: () => {
 				const file = this.app.workspace.getActiveFile();
@@ -157,6 +159,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-send-to-next-note",
+			icon: "forward",
 			name: COMMAND_SendToNextNote,
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				const file = view.file;
@@ -172,6 +175,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-schedule",
+			icon: "calendar-clock",
 			name: COMMAND_Schedule,
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				new SchedulerModal(this.app, editor, view).open();
@@ -180,6 +184,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-select-list-tree",
+			icon: "list-tree",
 			name: COMMAND_SelectListTree,
 			editorCallback: (editor: Editor, _: MarkdownView): void => {
 				selectListTree(editor);
