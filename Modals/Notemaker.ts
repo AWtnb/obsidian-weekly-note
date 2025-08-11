@@ -29,7 +29,7 @@ class WeeklyNote {
 	get path(): string {
 		return `${this.start.Year}/${this.name}`;
 	}
-	getNext(): WeeklyNote {
+	increment(): WeeklyNote {
 		const nextMonday = new Date(
 			this.start.Year,
 			this.start.Month - 1,

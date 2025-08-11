@@ -159,7 +159,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (!file) return;
 				const note = fromPath(file.path);
 				if (!note) return;
-				const next = note.getNext();
+				const next = note.increment();
 				const nextPath = next.path;
 				if (this.app.vault.getFileByPath(nextPath)) {
 					this.app.workspace.openLinkText("", nextPath, true);
@@ -194,7 +194,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (!note) return;
 				const t = getSelectedText(editor);
 				if (t.length < 1) return;
-				const nextPath = note.getNext().path;
+				const nextPath = note.increment().path;
 				appendToFile(this.app, nextPath, t);
 			},
 		});
