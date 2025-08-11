@@ -26,8 +26,7 @@ const COMMAND_SelectListTree = "リスト以下を選択";
 
 const noticeInvalidNotePath = (path: string) => {
 	const s = `ERROR: "${path}" not found!`;
-	new Notice(s, 1000);
-	console.log(s);
+	new Notice(s, 0);
 };
 
 const appendToFile = async (
@@ -94,13 +93,33 @@ const selectListTree = (editor: Editor) => {
 interface WeeklyNoteSettings {
 	template: string;
 	holidays: string[];
-	holidaySuffix: string;
+	holidayAltSuffix: string;
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	template: DEFAULT_TEMPLATE,
-	holidays: ["2025-01-01", "2026-01-01", "2027-01-01"],
-	holidaySuffix: " 休",
+	holidays: [
+		"2025-01-01 元日",
+		"2025-01-13 成人の日",
+		"2025-02-11 建国記念の日",
+		"2025-02-23 天皇誕生日",
+		"2025-02-24 振替休日",
+		"2025-03-20 春分の日",
+		"2025-04-29 昭和の日",
+		"2025-05-03 憲法記念日",
+		"2025-05-04 みどりの日",
+		"2025-05-05 こどもの日",
+		"2025-05-06 振替休日",
+		"2025-07-21 海の日",
+		"2025-08-11 山の日",
+		"2025-09-15 敬老の日",
+		"2025-09-23 秋分の日",
+		"2025-10-13 スポーツの日",
+		"2025-11-03 文化の日",
+		"2025-11-23 勤労感謝の日",
+		"2025-11-24 振替休日",
+	],
+	holidayAltSuffix: " 休",
 };
 
 export default class WeeklyNotePlugin extends Plugin {
@@ -118,7 +137,7 @@ export default class WeeklyNotePlugin extends Plugin {
 					this.app,
 					this.settings.template,
 					this.settings.holidays,
-					this.settings.holidaySuffix
+					this.settings.holidayAltSuffix
 				).open();
 			},
 		});
@@ -144,9 +163,18 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_OpenNextNote,
 			callback: () => {
 				const file = this.app.workspace.getActiveFile();
-				if (!file) return;
+				if (!file) {
+					new Notice("No active note!");
+					return;
+				}
 				const note = weeklyNoteFromPath(file.path);
-				if (!note) return;
+				if (!note) {
+					new Notice(
+						"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
+						0
+					);
+					return;
+				}
 				const next = note.increment();
 				const nextPath = next.path;
 				if (this.app.vault.getFileByPath(nextPath)) {
@@ -243,7 +271,7 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Holidays")
 			.setDesc(
-				"Specify holidays in yyyy-MM-dd format, separated by lines."
+				"Specify holidays in yyyy-MM-dd format, separated by lines. If a holiday name is specified after yyyy-MM-dd with a space, it will be inserted after the date. Otherwise, the Alternative suffix (below) will be inserted."
 			)
 			.addTextArea((textarea) =>
 				textarea
@@ -265,18 +293,18 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 			.setClass("weeklynote-setting-box");
 
 		new Setting(containerEl)
-			.setName("Suffix for holiday")
-			.setDesc("Suffix for holiday.")
+			.setName("Alternative suffix for holiday")
+			.setDesc("Alternative suffix for holiday.")
 			.addText((text) =>
 				text
-					.setValue(this.plugin.settings.holidaySuffix)
-					.setPlaceholder(DEFAULT_SETTINGS.holidaySuffix)
+					.setValue(this.plugin.settings.holidayAltSuffix)
+					.setPlaceholder(DEFAULT_SETTINGS.holidayAltSuffix)
 					.onChange(async (value) => {
 						const suffix =
 							value.length < 1
-								? DEFAULT_SETTINGS.holidaySuffix
+								? DEFAULT_SETTINGS.holidayAltSuffix
 								: value;
-						this.plugin.settings.holidaySuffix = suffix;
+						this.plugin.settings.holidayAltSuffix = suffix;
 						await this.plugin.saveSettings();
 					})
 			);

@@ -85,8 +85,8 @@ export const DEFAULT_TEMPLATE = [
 	"水 {{Wed}}\n",
 	"木 {{Thu}}\n",
 	"金 {{Fri}}\n",
-	"土 {{Sat}}\n",
-	"日 {{Sun}}\n",
+	"<span class=\"weeklynote-sat\">土</span> {{Sat}}\n",
+	"<span class=\"weeklynote-sun\">日</span> {{Sun}}\n",
 	"---",
 	"# Todo\n\n",
 ].join("\n");
@@ -94,7 +94,7 @@ export const DEFAULT_TEMPLATE = [
 const fillTemplate = (
 	template: string,
 	holidays: string[],
-	holidaySuffix: string,
+	holidayAltSuffix: string,
 	note: WeeklyNote
 ): string => {
 	const abbrs = [
@@ -120,14 +120,21 @@ const fillTemplate = (
 		const mon = abbrs[d.getMonth()];
 		const dd = String(d.getDate()).padStart(2, "0");
 		const regex = new RegExp(`{{${day}}}`, "g");
-		let date = `${mon}. ${dd}`;
 		const ymd =
 			`${d.getFullYear()}-` +
 			String(d.getMonth() + 1).padStart(2, "0") +
 			`-${String(d.getDate()).padStart(2, "0")}`;
-		if (holidays.includes(ymd)) {
-			date += holidaySuffix;
-		}
+		const suffix =
+			holidays
+				.filter((d) => d.startsWith(ymd))
+				.map((d) => {
+					const i = d.indexOf(" ");
+					if (i != -1) {
+						return d.substring(i);
+					}
+					return holidayAltSuffix;
+				})[0] || "";
+		const date = `${mon}. ${dd}${suffix}`;
 		template = template.replace(regex, date);
 	});
 	return template;
@@ -136,18 +143,18 @@ const fillTemplate = (
 export class NoteMakerModal extends Modal {
 	private template: string;
 	private holidays: string[];
-	private holidaySuffix: string;
+	private holidayAltSuffix: string;
 
 	constructor(
 		app: App,
 		template: string,
 		holidays: string[],
-		holidaySuffix: string
+		holidayAltSuffix: string
 	) {
 		super(app);
 		this.template = template;
 		this.holidays = holidays;
-		this.holidaySuffix = holidaySuffix;
+		this.holidayAltSuffix = holidayAltSuffix;
 	}
 
 	onOpen() {
@@ -200,7 +207,12 @@ export class NoteMakerModal extends Modal {
 				await this.app.vault.create(
 					notePath,
 					nav +
-						fillTemplate(t, this.holidays, this.holidaySuffix, note)
+						fillTemplate(
+							t,
+							this.holidays,
+							this.holidayAltSuffix,
+							note
+						)
 				);
 			}
 		}
