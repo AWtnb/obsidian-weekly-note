@@ -15,13 +15,11 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import { SchedulerModal } from "helper/Scheduler";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
-const COMMAND_Schedule = "スケジュール追加";
 const COMMAND_SelectListTree = "リスト以下を選択";
 
 const noticeInvalidNotePath = (path: string) => {
@@ -202,25 +200,6 @@ export default class WeeklyNotePlugin extends Plugin {
 				const nextPath = note.increment().path;
 				appendToFile(this.app, nextPath, t);
 			},
-		});
-
-		this.addCommand({
-			id: "weeklynote-schedule",
-			icon: "calendar-clock",
-			name: COMMAND_Schedule,
-			editorCallback: (editor: Editor, view: MarkdownView): void => {
-				new SchedulerModal(this.app, editor, view).open();
-			},
-		});
-
-		this.addRibbonIcon("calendar-clock", COMMAND_Schedule, () => {
-			const file = this.app.workspace.getActiveFile();
-			if (!file) return;
-			const editor = this.app.workspace.activeEditor?.editor || null;
-			if (!editor) return;
-			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-			if (!view) return;
-			new SchedulerModal(this.app, editor, view).open();
 		});
 
 		this.addCommand({
