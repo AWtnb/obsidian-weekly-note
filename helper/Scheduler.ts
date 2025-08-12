@@ -57,12 +57,11 @@ export class SchedulerModal extends Modal {
 			this.close();
 		};
 
-		schedule.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") {
-				e.preventDefault();
+		schedule.onkeydown = (ev) => {
+			if (ev.key == "Enter") {
 				insertSchedule();
 			}
-		});
+		};
 		button.onclick = insertSchedule;
 	}
 

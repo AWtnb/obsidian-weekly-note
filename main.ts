@@ -10,12 +10,12 @@ import {
 } from "obsidian";
 
 import {
-	NoteMakerModal,
-	newWeeklyNote,
-	weeklyNoteFromPath,
+	WeeklyNoteModal,
+	fromWeek,
+	fromPath,
 	DEFAULT_TEMPLATE,
-} from "Modals/Notemaker";
-import { SchedulerModal } from "Modals/Scheduler";
+} from "helper/Weeklynote";
+import { SchedulerModal } from "helper/Scheduler";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -141,7 +141,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "calendar-plus",
 			name: COMMAND_MakeNotes,
 			callback: () => {
-				new NoteMakerModal(
+				new WeeklyNoteModal(
 					this.app,
 					this.settings.template,
 					this.settings.holidays,
@@ -150,12 +150,17 @@ export default class WeeklyNotePlugin extends Plugin {
 			},
 		});
 
+		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
+			const note = fromWeek();
+			this.openNote(note.path);
+		});
+
 		this.addCommand({
 			id: "weeklynote-open-note",
 			icon: "calendar-fold",
 			name: COMMAND_OpenNote,
 			callback: () => {
-				const note = newWeeklyNote();
+				const note = fromWeek();
 				this.openNote(note.path);
 			},
 		});
@@ -170,7 +175,7 @@ export default class WeeklyNotePlugin extends Plugin {
 					new Notice("No active note!");
 					return;
 				}
-				const note = weeklyNoteFromPath(file.path);
+				const note = fromPath(file.path);
 				if (!note) {
 					new Notice(
 						"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
@@ -190,7 +195,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				const file = view.file;
 				if (!file) return;
-				const note = weeklyNoteFromPath(file.path);
+				const note = fromPath(file.path);
 				if (!note) return;
 				const t = getSelectedText(editor);
 				if (t.length < 1) return;

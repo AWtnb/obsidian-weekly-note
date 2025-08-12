@@ -39,16 +39,16 @@ class WeeklyNote {
 	}
 }
 
-export const newWeeklyNote = (weekDelta: number = 0): WeeklyNote => {
+export const fromWeek = (delta: number = 0): WeeklyNote => {
 	const now = new Date();
 	const dayOfWeek = now.getDay();
 	const monday = new Date(now);
-	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * weekDelta);
+	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * delta);
 	const note = new WeeklyNote(monday);
 	return note;
 };
 
-export const weeklyNoteFromPath = (path: string): WeeklyNote | null => {
+export const fromPath = (path: string): WeeklyNote | null => {
 	const pathElems = path.split("/");
 	if (pathElems.length < 2) return null;
 	const folder = pathElems.at(-2);
@@ -64,7 +64,7 @@ export const weeklyNoteFromPath = (path: string): WeeklyNote | null => {
 	return note;
 };
 
-const weeklyNotes = (yyyy: number): WeeklyNote[] => {
+const byYear = (yyyy: number): WeeklyNote[] => {
 	const startDate = new Date(`${yyyy}-01-01`);
 	const startDayOfWeek = startDate.getDay();
 	const firstMonday = new Date(startDate);
@@ -85,8 +85,8 @@ export const DEFAULT_TEMPLATE = [
 	"水 {{Wed}}\n",
 	"木 {{Thu}}\n",
 	"金 {{Fri}}\n",
-	"<span class=\"weeklynote-sat\">土</span> {{Sat}}\n",
-	"<span class=\"weeklynote-sun\">日</span> {{Sun}}\n",
+	'<span class="weeklynote-sat">土</span> {{Sat}}\n',
+	'<span class="weeklynote-sun">日</span> {{Sun}}\n',
 	"---",
 	"# Todo\n\n",
 ].join("\n");
@@ -140,7 +140,7 @@ const fillTemplate = (
 	return template;
 };
 
-export class NoteMakerModal extends Modal {
+export class WeeklyNoteModal extends Modal {
 	private template: string;
 	private holidays: string[];
 	private holidayAltSuffix: string;
@@ -188,7 +188,7 @@ export class NoteMakerModal extends Modal {
 			await this.app.vault.createFolder(yyyy);
 		}
 
-		const notes = weeklyNotes(y);
+		const notes = byYear(y);
 		for (let i = 0; i < notes.length; i++) {
 			const note = notes[i];
 			const notePath = note.path;
@@ -198,10 +198,10 @@ export class NoteMakerModal extends Modal {
 				const t = this.template || "";
 				const navs = [];
 				if (0 < i) {
-					navs.push(`[[${notes[i - 1].name}|prev]]`);
+					navs.push(`\u25c0[[${notes[i - 1].name}|prev]]`);
 				}
 				if (i < notes.length - 1) {
-					navs.push(`[[${notes[i + 1].name}|next]]`);
+					navs.push(`[[${notes[i + 1].name}|next]]\u25b6`);
 				}
 				const nav = `${navs.join("  |  ")}\n\n`;
 				await this.app.vault.create(
