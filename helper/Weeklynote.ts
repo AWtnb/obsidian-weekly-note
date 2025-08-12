@@ -85,8 +85,9 @@ export const DEFAULT_TEMPLATE = [
 	"水 {{Wed}}\n",
 	"木 {{Thu}}\n",
 	"金 {{Fri}}\n",
-	'<span class="weeklynote-sat">土</span> {{Sat}}\n',
-	'<span class="weeklynote-sun">日</span> {{Sun}}\n',
+	"土 {{Sat}}\n",
+	"日 {{Sun}}\n",
+	"{{prev}} {{next}}\n",
 	"---",
 	"# Todo\n\n",
 ].join("\n");
@@ -95,6 +96,8 @@ const fillTemplate = (
 	template: string,
 	holidays: string[],
 	holidayAltSuffix: string,
+	prev: WeeklyNote | null,
+	next: WeeklyNote | null,
 	note: WeeklyNote
 ): string => {
 	const abbrs = [
@@ -136,6 +139,15 @@ const fillTemplate = (
 				})[0] || "";
 		const date = `${mon}. ${dd}${suffix}`;
 		template = template.replace(regex, date);
+	});
+
+	template = template.replace(new RegExp(`{{prev}}`, "g"), () => {
+		if (prev) return `[[${prev.path}|prev]]`;
+		return "";
+	});
+	template = template.replace(new RegExp(`{{next}}`, "g"), () => {
+		if (next) return `[[${next.path}|next]]`;
+		return "";
 	});
 	return template;
 };
@@ -196,23 +208,16 @@ export class WeeklyNoteModal extends Modal {
 				new Notice(`${notePath} already exists.`);
 			} else {
 				const t = this.template || "";
-				const navs = [];
-				if (0 < i) {
-					navs.push(`\u25c0[[${notes[i - 1].name}|prev]]`);
-				}
-				if (i < notes.length - 1) {
-					navs.push(`[[${notes[i + 1].name}|next]]\u25b6`);
-				}
-				const nav = `${navs.join("  |  ")}\n\n`;
 				await this.app.vault.create(
 					notePath,
-					nav +
-						fillTemplate(
-							t,
-							this.holidays,
-							this.holidayAltSuffix,
-							note
-						)
+					fillTemplate(
+						t,
+						this.holidays,
+						this.holidayAltSuffix,
+						notes[i - 1] || null,
+						notes[i + 1] || null,
+						note
+					)
 				);
 			}
 		}

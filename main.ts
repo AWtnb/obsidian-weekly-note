@@ -256,7 +256,7 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Template")
 			.setDesc(
-				"Template for weekly note. `{{Mon}}` and `{{Tue}}` will be converted to dates like `Jan. 01` and `Jan. 02`."
+				"Template for weekly note. `{{Mon}}` and `{{Tue}}` will be converted to dates like `Jan. 01` and `Jan. 02`. `{{prev}}` and `{{next}}` will be replaced with link to previous / next note."
 			)
 			.addTextArea((textarea) =>
 				textarea
