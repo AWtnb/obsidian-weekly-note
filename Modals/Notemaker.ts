@@ -1,4 +1,4 @@
-import { App, Modal, Notice, MarkdownView } from "obsidian";
+import { App, Modal, Notice } from "obsidian";
 
 const toMMdd = (date: Date): string => {
 	return (

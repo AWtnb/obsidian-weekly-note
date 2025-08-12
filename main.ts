@@ -125,6 +125,14 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
+	openNote(path: string) {
+		if (this.app.vault.getFileByPath(path)) {
+			this.app.workspace.openLinkText("", path, true);
+		} else {
+			noticeInvalidNotePath(path);
+		}
+	}
+
 	async onload() {
 		await this.loadSettings();
 
@@ -148,12 +156,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_OpenNote,
 			callback: () => {
 				const note = newWeeklyNote();
-				const notePath = note.path;
-				if (this.app.vault.getFileByPath(notePath)) {
-					this.app.workspace.openLinkText("", notePath, true);
-				} else {
-					noticeInvalidNotePath(notePath);
-				}
+				this.openNote(note.path);
 			},
 		});
 
@@ -176,12 +179,7 @@ export default class WeeklyNotePlugin extends Plugin {
 					return;
 				}
 				const next = note.increment();
-				const nextPath = next.path;
-				if (this.app.vault.getFileByPath(nextPath)) {
-					this.app.workspace.openLinkText("", nextPath, true);
-				} else {
-					noticeInvalidNotePath(nextPath);
-				}
+				this.openNote(next.path);
 			},
 		});
 
