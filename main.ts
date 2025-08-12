@@ -150,11 +150,6 @@ export default class WeeklyNotePlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
-			const note = fromWeek();
-			this.openNote(note.path);
-		});
-
 		this.addCommand({
 			id: "weeklynote-open-note",
 			icon: "calendar-fold",
@@ -163,6 +158,11 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = fromWeek();
 				this.openNote(note.path);
 			},
+		});
+
+		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
+			const note = fromWeek();
+			this.openNote(note.path);
 		});
 
 		this.addCommand({
@@ -211,6 +211,16 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
 				new SchedulerModal(this.app, editor, view).open();
 			},
+		});
+
+		this.addRibbonIcon("calendar-clock", COMMAND_Schedule, () => {
+			const file = this.app.workspace.getActiveFile();
+			if (!file) return;
+			const editor = this.app.workspace.activeEditor?.editor || null;
+			if (!editor) return;
+			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (!view) return;
+			new SchedulerModal(this.app, editor, view).open();
 		});
 
 		this.addCommand({
