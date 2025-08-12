@@ -80,11 +80,11 @@ const byYear = (yyyy: number): WeeklyNote[] => {
 };
 
 export const DEFAULT_TEMPLATE = [
-	"月 {{Mon}}\n",
-	"火 {{Tue}}\n",
-	"水 {{Wed}}\n",
-	"木 {{Thu}}\n",
-	"金 {{Fri}}\n",
+	"**月 {{Mon}}**\n",
+	"**火 {{Tue}}**\n",
+	"**水 {{Wed}}**\n",
+	"**木 {{Thu}}**\n",
+	"**金 {{Fri}}**\n",
 	"土 {{Sat}}\n",
 	"日 {{Sun}}\n",
 	"{{prev}} {{next}}\n",
