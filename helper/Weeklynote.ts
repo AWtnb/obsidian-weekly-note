@@ -1,10 +1,11 @@
 import { App, Modal, Notice } from "obsidian";
 
+const padZero = (n: number, width: number = 2): string => {
+	return String(n).padStart(width, "0");
+};
+
 const toMMdd = (date: Date): string => {
-	return (
-		String(date.getMonth() + 1).padStart(2, "0") +
-		String(date.getDate()).padStart(2, "0")
-	);
+	return padZero(date.getMonth() + 1) + padZero(date.getDate());
 };
 
 interface StartOfWeek {
@@ -85,88 +86,104 @@ export const DEFAULT_TEMPLATE = [
 	"水 {{Wed}}\n- ",
 	"木 {{Thu}}\n- ",
 	"金 {{Fri}}\n- ",
-	"土 {{Sat}}\n- ",
-	"日 {{Sun}}\n- ",
+	"土 {{Sat}}\n",
+	"日 {{Sun}}\n",
 	"{{prev}} {{next}}\n",
 	"---",
 	"# Todo\n\n",
 ].join("\n");
 
-const fillTemplate = (
-	template: string,
-	holidays: string[],
-	holidayAltSuffix: string,
-	prev: WeeklyNote | null,
-	next: WeeklyNote | null,
-	note: WeeklyNote
-): string => {
-	const abbrs = [
-		"Jan",
-		"Feb",
-		"Mar",
-		"Apr",
-		"May",
-		"Jun",
-		"Jul",
-		"Aug",
-		"Sep",
-		"Oct",
-		"Nov",
-		"Dec",
-	];
-	["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach((day, i) => {
-		const d = new Date(
-			note.start.Year,
-			note.start.Month - 1,
-			note.start.Day + i
+class Holiday {
+	private readonly date: Date | null;
+	readonly name: string;
+	constructor(date: string, name: string) {
+		try {
+			this.date = new Date(date.trim());
+		} catch (error) {
+			console.error(error);
+			this.date = null;
+		}
+		this.name = name.trim();
+	}
+	isEqualTo(d: Date): boolean {
+		if (!this.date) {
+			return false;
+		}
+		return (
+			d.getFullYear() == this.date.getFullYear() &&
+			d.getMonth() == this.date.getMonth() &&
+			d.getDate() == this.date.getDate()
 		);
-		const mon = abbrs[d.getMonth()];
-		const dd = String(d.getDate()).padStart(2, "0");
-		const regex = new RegExp(`{{${day}}}`, "g");
-		const ymd =
-			`${d.getFullYear()}-` +
-			String(d.getMonth() + 1).padStart(2, "0") +
-			`-${String(d.getDate()).padStart(2, "0")}`;
-		const suffix =
-			holidays
-				.filter((d) => d.startsWith(ymd))
-				.map((d) => {
-					const i = d.indexOf(" ");
-					if (i != -1) {
-						return d.substring(i);
-					}
-					return holidayAltSuffix;
-				})[0] || "";
-		const date = `${mon}. ${dd}${suffix}`;
-		template = template.replace(regex, date);
-	});
-
-	template = template.replace(new RegExp(`{{prev}}`, "g"), () => {
-		if (prev) return `[[${prev.path}|prev]]`;
-		return "";
-	});
-	template = template.replace(new RegExp(`{{next}}`, "g"), () => {
-		if (next) return `[[${next.path}|next]]`;
-		return "";
-	});
-	return template;
-};
+	}
+}
 
 export class WeeklyNoteModal extends Modal {
 	private template: string;
-	private holidays: string[];
-	private holidayAltSuffix: string;
+	private holidays: Holiday[];
 
-	constructor(
-		app: App,
-		template: string,
-		holidays: string[],
-		holidayAltSuffix: string
-	) {
+	constructor(app: App, template: string, holidays: string[]) {
 		super(app);
 		this.template = template;
-		this.holidays = holidays;
-		this.holidayAltSuffix = holidayAltSuffix;
+		this.holidays = holidays.map((s): Holiday => {
+			const i = s.indexOf(" ");
+			if (i != -1) {
+				return new Holiday(s.substring(0, i), s.substring(i));
+			}
+			return new Holiday(s, "");
+		});
+	}
+
+	private getHolidaySuffix(d: Date): string {
+		return (
+			this.holidays
+				.filter((holiday) => holiday.isEqualTo(d))
+				.map((holiday) => {
+					return holiday.name;
+				})[0] || ""
+		);
+	}
+
+	getContent(
+		note: WeeklyNote,
+		prev: WeeklyNote | null,
+		next: WeeklyNote | null
+	): string {
+		let filled = this.template;
+		["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach((day, i) => {
+			const d = new Date(
+				note.start.Year,
+				note.start.Month - 1,
+				note.start.Day + i
+			);
+			const mon = [
+				"Jan",
+				"Feb",
+				"Mar",
+				"Apr",
+				"May",
+				"Jun",
+				"Jul",
+				"Aug",
+				"Sep",
+				"Oct",
+				"Nov",
+				"Dec",
+			][d.getMonth()];
+			const dd = padZero(d.getDate());
+			const suffix = this.getHolidaySuffix(d);
+			const date = `${mon}. ${dd} ${suffix}`.trimEnd();
+			const regex = new RegExp(`{{${day}}}`, "g");
+			filled = filled.replace(regex, date);
+		});
+		filled = filled.replace(new RegExp(`{{prev}}`, "g"), () => {
+			if (prev) return `[[${prev.path}|prev]]`;
+			return "";
+		});
+		filled = filled.replace(new RegExp(`{{next}}`, "g"), () => {
+			if (next) return `[[${next.path}|next]]`;
+			return "";
+		});
+		return filled;
 	}
 
 	onOpen() {
@@ -210,13 +227,10 @@ export class WeeklyNoteModal extends Modal {
 				const t = this.template || "";
 				await this.app.vault.create(
 					notePath,
-					fillTemplate(
-						t,
-						this.holidays,
-						this.holidayAltSuffix,
+					this.getContent(
+						note,
 						notes[i - 1] || null,
-						notes[i + 1] || null,
-						note
+						notes[i + 1] || null
 					)
 				);
 			}

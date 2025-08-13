@@ -91,7 +91,6 @@ const selectListTree = (editor: Editor) => {
 interface WeeklyNoteSettings {
 	template: string;
 	holidays: string[];
-	holidayAltSuffix: string;
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
@@ -117,7 +116,6 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 		"2025-11-23 勤労感謝の日",
 		"2025-11-24 振替休日",
 	],
-	holidayAltSuffix: " 休",
 };
 
 export default class WeeklyNotePlugin extends Plugin {
@@ -142,8 +140,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				new WeeklyNoteModal(
 					this.app,
 					this.settings.template,
-					this.settings.holidays,
-					this.settings.holidayAltSuffix
+					this.settings.holidays
 				).open();
 			},
 		});
@@ -262,9 +259,6 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Holidays")
-			.setDesc(
-				"Specify holidays in yyyy-MM-dd format, separated by lines. If a holiday name is specified after yyyy-MM-dd with a space, it will be inserted after the date. Otherwise, the Alternative suffix (below) will be inserted."
-			)
 			.addTextArea((textarea) =>
 				textarea
 					.setValue(this.plugin.settings.holidays.join("\n"))
@@ -283,22 +277,5 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 					})
 			)
 			.setClass("weeklynote-setting-box");
-
-		new Setting(containerEl)
-			.setName("Alternative suffix for holiday")
-			.setDesc("Alternative suffix for holiday.")
-			.addText((text) =>
-				text
-					.setValue(this.plugin.settings.holidayAltSuffix)
-					.setPlaceholder(DEFAULT_SETTINGS.holidayAltSuffix)
-					.onChange(async (value) => {
-						const suffix =
-							value.length < 1
-								? DEFAULT_SETTINGS.holidayAltSuffix
-								: value;
-						this.plugin.settings.holidayAltSuffix = suffix;
-						await this.plugin.saveSettings();
-					})
-			);
 	}
 }
