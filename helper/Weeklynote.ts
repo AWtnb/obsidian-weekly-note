@@ -81,14 +81,14 @@ const byYear = (yyyy: number): WeeklyNote[] => {
 };
 
 export const DEFAULT_TEMPLATE = [
-	"月 {{Mon}}\n- ",
-	"火 {{Tue}}\n- ",
-	"水 {{Wed}}\n- ",
-	"木 {{Thu}}\n- ",
-	"金 {{Fri}}\n- ",
+	"prev: {{prev}} next: {{next}}\n",
+	"月 {{Mon}}\n",
+	"火 {{Tue}}\n",
+	"水 {{Wed}}\n",
+	"木 {{Thu}}\n",
+	"金 {{Fri}}\n",
 	"土 {{Sat}}\n",
 	"日 {{Sun}}\n",
-	"{{prev}} {{next}}\n",
 	"---",
 	"# Todo\n\n",
 ].join("\n");
@@ -97,11 +97,11 @@ class Holiday {
 	private readonly date: Date | null;
 	readonly name: string;
 	constructor(date: string, name: string) {
-		try {
-			this.date = new Date(date.trim());
-		} catch (error) {
-			console.error(error);
+		const t = Date.parse(date.trim());
+		if (Number.isNaN(t)) {
 			this.date = null;
+		} else {
+			this.date = new Date(t);
 		}
 		this.name = name.trim();
 	}
@@ -175,14 +175,15 @@ export class WeeklyNoteModal extends Modal {
 			const regex = new RegExp(`{{${day}}}`, "g");
 			filled = filled.replace(regex, date);
 		});
-		filled = filled.replace(new RegExp(`{{prev}}`, "g"), () => {
-			if (prev) return `[[${prev.path}|prev]]`;
-			return "";
-		});
-		filled = filled.replace(new RegExp(`{{next}}`, "g"), () => {
-			if (next) return `[[${next.path}|next]]`;
-			return "";
-		});
+		filled = filled
+			.replace(new RegExp(`{{prev}}`, "g"), () => {
+				if (prev) return `[[${prev.path}]]`;
+				return "";
+			})
+			.replace(new RegExp(`{{next}}`, "g"), () => {
+				if (next) return `[[${next.path}]]`;
+				return "";
+			});
 		return filled;
 	}
 
