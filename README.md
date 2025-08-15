@@ -28,13 +28,16 @@ Copy over `main.js`, `styles.css`, `manifest.json` to `(VaultFolder)/.obsidian/p
 
 ## Develop / Debug
 
-1. Create test vault and open from Obsidian.
-1. `mkdir (VaultFolder)\.obsidian\plugins`
-1. `cd (VaultFolder)\.obsidian\plugins`
-1. `git clone https://github.com/AWtnb/obsidian-weekly-note.git`
-1. `npm install`
-1. `npm run dev`
-1. From Obsidian, run `Reload app without saving` command. Then, `Weekly-Note` should appear in `Community plugins` setting.
+Run below command after creating test vault from Obsidian.
+
+```PowerShell
+# on test valult directory:
+$n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;npm install;Pop-Location
+```
+
+Afterwords, run `npm run dev`.
+
+Then on Obsidian, run `Reload app without saving` command. `Weekly-Note` should appear in `Community plugins` setting.
 
 
 ---
