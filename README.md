@@ -17,7 +17,7 @@ Run [install.ps1](install.ps1) with vault folder path as an argument.
 
 ```
 # Example
-.\install.ps1 C:\Users\awtnb\Documents\schedule
+.\install.ps1 C:\Users\awtnb\Schedule
 ```
 
 ### Manual install
