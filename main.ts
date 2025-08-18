@@ -18,6 +18,7 @@ import {
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
+const COMMAND_OpenPrevNote = "前のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_SelectListTree = "リスト以下を選択";
@@ -123,7 +124,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 	openNote(path: string) {
 		if (this.app.vault.getFileByPath(path)) {
-			this.app.workspace.openLinkText("", path, true);
+			this.app.workspace.openLinkText("", path, false);
 		} else {
 			noticeInvalidNotePath(path);
 		}
@@ -158,6 +159,29 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
 			const note = fromWeek();
 			this.openNote(note.path);
+		});
+
+		this.addCommand({
+			id: "weeklynote-open-prev-note",
+			icon: "square-arrow-left",
+			name: COMMAND_OpenPrevNote,
+			callback: () => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file) {
+					new Notice("No active note!");
+					return;
+				}
+				const note = fromPath(file.path);
+				if (!note) {
+					new Notice(
+						"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
+						0
+					);
+					return;
+				}
+				const prev = note.decrement();
+				this.openNote(prev.path);
+			},
 		});
 
 		this.addCommand({

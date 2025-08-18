@@ -30,13 +30,19 @@ class WeeklyNote {
 	get path(): string {
 		return `${this.start.Year}/${this.name}`;
 	}
-	increment(): WeeklyNote {
-		const nextMonday = new Date(
+	private getMonday(delta: number): WeeklyNote {
+		const monday = new Date(
 			this.start.Year,
 			this.start.Month - 1,
-			this.start.Day + 7
+			this.start.Day + 7 * delta
 		);
-		return new WeeklyNote(nextMonday);
+		return new WeeklyNote(monday);
+	}
+	increment(): WeeklyNote {
+		return this.getMonday(1);
+	}
+	decrement(): WeeklyNote {
+		return this.getMonday(-1);
 	}
 }
 
@@ -65,7 +71,7 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	return note;
 };
 
-const byYear = (yyyy: number): WeeklyNote[] => {
+const fromYear = (yyyy: number): WeeklyNote[] => {
 	const startDate = new Date(`${yyyy}-01-01`);
 	const startDayOfWeek = startDate.getDay();
 	const firstMonday = new Date(startDate);
@@ -82,15 +88,15 @@ const byYear = (yyyy: number): WeeklyNote[] => {
 
 export const DEFAULT_TEMPLATE = [
 	"prev: {{prev}} next: {{next}}\n",
-	"月 {{Mon}}\n",
-	"火 {{Tue}}\n",
-	"水 {{Wed}}\n",
-	"木 {{Thu}}\n",
-	"金 {{Fri}}\n",
-	"土 {{Sat}}\n",
-	"日 {{Sun}}\n",
+	"# 月 {{Mon}}\n",
+	"# 火 {{Tue}}\n",
+	"# 水 {{Wed}}\n",
+	"# 木 {{Thu}}\n",
+	"# 金 {{Fri}}\n",
+	"# 土 {{Sat}}\n",
+	"# 日 {{Sun}}\n",
 	"---",
-	"# Todo\n\n",
+	"",
 ].join("\n");
 
 class Holiday {
@@ -218,7 +224,7 @@ export class WeeklyNoteModal extends Modal {
 			await this.app.vault.createFolder(yyyy);
 		}
 
-		const notes = byYear(y);
+		const notes = fromYear(y);
 		for (let i = 0; i < notes.length; i++) {
 			const note = notes[i];
 			const notePath = note.path;
