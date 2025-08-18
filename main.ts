@@ -15,6 +15,7 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
+import { NoteEditor } from "helper/Noteeditor";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -39,29 +40,6 @@ const appendToFile = async (
 	} else {
 		noticeInvalidNotePath(filePath);
 	}
-};
-
-interface CursorEdge {
-	top: number;
-	bottom: number;
-}
-
-const getCursorEdge = (editor: Editor): CursorEdge => {
-	return {
-		top: editor.getCursor("from").line,
-		bottom: editor.getCursor("to").line,
-	};
-};
-
-const getSelectedText = (editor: Editor): string => {
-	const edge = getCursorEdge(editor);
-	if (edge.top == edge.bottom) {
-		return editor.getLine(edge.top);
-	}
-	return editor.getRange(
-		{ line: edge.top, ch: 0 },
-		{ line: edge.bottom, ch: editor.getLine(edge.bottom).length }
-	);
 };
 
 interface WeeklyNoteSettings {
@@ -191,10 +169,19 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (!file) return;
 				const note = fromPath(file.path);
 				if (!note) return;
-				const t = getSelectedText(editor);
-				if (t.length < 1) return;
+
+				const ed = new NoteEditor(editor);
+				const appended = [
+					"",
+					ed.lastPlainLine(),
+					ed.rollup(),
+					ed.cursorLines(),
+				]
+					.filter(Boolean)
+					.flat()
+					.join("\n");
 				const nextPath = note.increment().path;
-				appendToFile(this.app, nextPath, t);
+				appendToFile(this.app, nextPath, appended);
 			},
 		});
 
