@@ -32,7 +32,7 @@ Run below command after creating test vault from Obsidian.
 
 ```PowerShell
 # on test valult directory:
-$n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;npm install;Pop-Location
+$n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;npm install;code .;Pop-Location
 ```
 
 Afterwords, run `npm run dev`.
