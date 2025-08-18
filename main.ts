@@ -21,7 +21,6 @@ const COMMAND_OpenNote = "今週のノートを開く";
 const COMMAND_OpenPrevNote = "前のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
-const COMMAND_SelectListTree = "リスト以下を選択";
 
 const noticeInvalidNotePath = (path: string) => {
 	const s = `ERROR: "${path}" not found!`;
@@ -62,30 +61,6 @@ const getSelectedText = (editor: Editor): string => {
 	return editor.getRange(
 		{ line: edge.top, ch: 0 },
 		{ line: edge.bottom, ch: editor.getLine(edge.bottom).length }
-	);
-};
-
-const selectListTree = (editor: Editor) => {
-	const edge = getCursorEdge(editor);
-
-	const baseLine = editor.getLine(edge.bottom);
-	const baseIndent = baseLine.length - baseLine.trimStart().length;
-	let selTop = edge.top;
-	let selBottom = edge.bottom;
-
-	const lines = editor.getValue().split("\n");
-	for (let i = edge.bottom + 1; i < lines.length; i++) {
-		const line = lines[i];
-		const indent = line.length - line.trimStart().length;
-		if (baseIndent < indent) {
-			selBottom = i;
-		} else {
-			break;
-		}
-	}
-	editor.setSelection(
-		{ line: selTop, ch: 0 },
-		{ line: selBottom, ch: editor.getLine(selBottom).length }
 	);
 };
 
@@ -220,15 +195,6 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (t.length < 1) return;
 				const nextPath = note.increment().path;
 				appendToFile(this.app, nextPath, t);
-			},
-		});
-
-		this.addCommand({
-			id: "weeklynote-select-list-tree",
-			icon: "list-tree",
-			name: COMMAND_SelectListTree,
-			editorCallback: (editor: Editor, _: MarkdownView): void => {
-				selectListTree(editor);
 			},
 		});
 
