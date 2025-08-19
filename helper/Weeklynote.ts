@@ -14,7 +14,7 @@ interface StartOfWeek {
 	Day: number;
 }
 
-class WeeklyNote {
+export class WeeklyNote {
 	readonly name: string;
 	readonly start: StartOfWeek;
 	constructor(monday: Date) {

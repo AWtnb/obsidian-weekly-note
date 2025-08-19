@@ -10,6 +10,7 @@ import {
 } from "obsidian";
 
 import {
+	WeeklyNote,
 	WeeklyNoteModal,
 	fromWeek,
 	fromPath,
@@ -75,12 +76,29 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
-	openNote(path: string) {
+	private openNote(path: string) {
 		if (this.app.vault.getFileByPath(path)) {
 			this.app.workspace.openLinkText("", path, false);
 		} else {
 			noticeInvalidNotePath(path);
 		}
+	}
+
+	private getActiveNote(): WeeklyNote | null {
+		const file = this.app.workspace.getActiveFile();
+		if (!file) {
+			new Notice("No active note!");
+			return null;
+		}
+		const note = fromPath(file.path);
+		if (!note) {
+			new Notice(
+				"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
+				0
+			);
+			return null;
+		}
+		return note;
 	}
 
 	async onload() {
@@ -119,22 +137,20 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "square-arrow-left",
 			name: COMMAND_OpenPrevNote,
 			callback: () => {
-				const file = this.app.workspace.getActiveFile();
-				if (!file) {
-					new Notice("No active note!");
-					return;
+				const note = this.getActiveNote();
+				if (note) {
+					const prev = note.decrement();
+					this.openNote(prev.path);
 				}
-				const note = fromPath(file.path);
-				if (!note) {
-					new Notice(
-						"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
-						0
-					);
-					return;
-				}
+			},
+		});
+
+		this.addRibbonIcon("square-arrow-left", COMMAND_OpenPrevNote, () => {
+			const note = this.getActiveNote();
+			if (note) {
 				const prev = note.decrement();
 				this.openNote(prev.path);
-			},
+			}
 		});
 
 		this.addCommand({
@@ -142,22 +158,20 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "square-arrow-right",
 			name: COMMAND_OpenNextNote,
 			callback: () => {
-				const file = this.app.workspace.getActiveFile();
-				if (!file) {
-					new Notice("No active note!");
-					return;
+				const note = this.getActiveNote();
+				if (note) {
+					const next = note.increment();
+					this.openNote(next.path);
 				}
-				const note = fromPath(file.path);
-				if (!note) {
-					new Notice(
-						"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
-						0
-					);
-					return;
-				}
+			},
+		});
+
+		this.addRibbonIcon("square-arrow-right", COMMAND_OpenNextNote, () => {
+			const note = this.getActiveNote();
+			if (note) {
 				const next = note.increment();
 				this.openNote(next.path);
-			},
+			}
 		});
 
 		this.addCommand({
