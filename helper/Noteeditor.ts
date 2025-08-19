@@ -50,33 +50,36 @@ export class NoteEditor {
 			});
 	}
 
+	private rollup(): string[] {
+		return this.lines.slice(0, this.edges[0].top).reverse();
+	}
+
 	lastPlainLine(): string | null {
-		const l = this.edges[0].top - 1;
-		for (let i = l; 0 <= i; i--) {
-			const line = this.lineAt(i);
+		const lines = this.rollup();
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
 			const c = line.trimStart().substring(0, 1);
-			if (["-", "+", "*"].indexOf(c) == -1) {
+			if (c && ["-", "+", "*"].indexOf(c) == -1) {
 				return line;
 			}
 		}
 		return null;
 	}
 
-	rollup(): string[] {
-		const lines: string[] = [];
-		const t = this.edges[0].top;
-		const depth = getIndent(this.lineAt(t));
-		for (let i = t - 1; 0 <= i; i--) {
-			const line = this.lineAt(i);
-			const d = getIndent(line);
-			if (d < depth) {
-				lines.push(line);
-				if (d < 1) {
-					break;
+	backToRoot(): string[] {
+		const curLine = this.lineAt(this.edges[0].top);
+		const depth = getIndent(curLine);
+		return this.rollup()
+			.filter((line) => {
+				return getIndent(line) < depth;
+			})
+			.reduce((acc: string[], s: string) => {
+				const last = acc.at(-1);
+				if (!last || getIndent(last) != 0) {
+					acc.push(s);
 				}
-			}
-		}
-		return lines
+				return acc;
+			}, [])
 			.reduce((acc: string[], s: string) => {
 				const last = acc.at(-1);
 				if (last && getIndent(last) == getIndent(s)) {
