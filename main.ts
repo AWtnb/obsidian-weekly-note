@@ -17,30 +17,28 @@ import {
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
 import { NoteEditor, strikeThrough } from "helper/Noteeditor";
+import { JumpModal, openNote } from "helper/Notejumper";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
 const COMMAND_OpenPrevNote = "前のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
-
-const noticeInvalidNotePath = (path: string) => {
-	const s = `ERROR: "${path}" not found!`;
-	new Notice(s, 0);
-};
+const COMMAND_JumpToNote = "ノートにジャンプ";
 
 const appendToFile = async (
 	app: App,
-	filePath: string,
+	path: string,
 	content: string
 ): Promise<void> => {
-	const file = app.vault.getFileByPath(filePath);
+	const file = app.vault.getFileByPath(path);
 	if (file instanceof TFile) {
 		await app.vault.append(file, content);
-		new Notice(`Appended to: ${filePath}`);
-	} else {
-		noticeInvalidNotePath(filePath);
+		new Notice(`Appended to: ${path}`);
+		return;
 	}
+	const s = `ERROR: Failed to append to "${path}" (file not found)`;
+	new Notice(s, 0);
 };
 
 interface WeeklyNoteSettings {
@@ -77,11 +75,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
 	private openNote(path: string) {
-		if (this.app.vault.getFileByPath(path)) {
-			this.app.workspace.openLinkText("", path, false);
-		} else {
-			noticeInvalidNotePath(path);
-		}
+		openNote(this.app, path);
 	}
 
 	private getActiveNote(): WeeklyNote | null {
@@ -115,6 +109,19 @@ export default class WeeklyNotePlugin extends Plugin {
 					this.settings.holidays
 				).open();
 			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-jump-to-note",
+			icon: "book-open",
+			name: COMMAND_JumpToNote,
+			callback: () => {
+				new JumpModal(this.app).open();
+			},
+		});
+
+		this.addRibbonIcon("book-open", COMMAND_JumpToNote, () => {
+			new JumpModal(this.app).open();
 		});
 
 		this.addCommand({

@@ -204,6 +204,7 @@ export class WeeklyNoteModal extends Modal {
 
 		input.onkeydown = (ev) => {
 			if (ev.key == "Enter") {
+				ev.preventDefault();
 				this.makeNotes(input.value);
 			}
 		};

@@ -4,14 +4,13 @@
 	margin: 8px 0;
 }
 
-#schedule-modal label,
-#schedule-modal input {
-	display: block;
-	margin: 8px 0;
+#jump-modal .dest-preview {
+	min-height: 1.2rem;
 }
-
-#schedule-modal input[type="text"] {
-	width: 100%;
+#jump-modal input {
+	display: block;
+	height: var(--input-height);
+	margin: 8px 0;
 }
 
 .weeklynote-setting-box {
@@ -23,12 +22,4 @@
 .weeklynote-setting-box textarea {
 	min-height: 200px;
 	width: 100%;
-}
-
-.weeklynote-sat {
-	color: darkcyan;
-}
-
-.weeklynote-sun {
-	color: tomato;
 }
