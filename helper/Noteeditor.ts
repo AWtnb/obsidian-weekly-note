@@ -12,9 +12,31 @@ const toSeq = (start: number, end: number): number[] => {
 	return arr;
 };
 
+export const strikeThrough = (s: string): string => {
+	const symbol = "~~";
+	const reg = new RegExp("(^\\s*)(.+)", "g");
+	return s.replace(reg, (_: string, p1: string, p2: string): string => {
+		const line = p2.trimEnd();
+		const head = line.substring(0, 2);
+		if (["- ", "+ ", "* "].includes(head)) {
+			return p1 + head + symbol + line.substring(2) + symbol;
+		}
+		return p1 + symbol + line + symbol;
+	});
+};
+
 interface CursorEdge {
 	top: number;
 	bottom: number;
+}
+
+interface LineReplacer {
+	(line: string): string;
+}
+
+interface NewLine {
+	index: number;
+	text: string;
 }
 
 const toEdge = (sel: EditorSelection): CursorEdge => {
@@ -31,11 +53,7 @@ export class NoteEditor {
 		this.edges = editor.listSelections().map((sel) => toEdge(sel));
 	}
 
-	private lineAt(line: number): string {
-		return this.lines[line];
-	}
-
-	cursorLines(): string[] {
+	private cursorLineIndexes(): number[] {
 		return this.edges
 			.map((edge) => {
 				if (edge.top == edge.bottom) {
@@ -44,10 +62,13 @@ export class NoteEditor {
 				return toSeq(edge.top, edge.bottom);
 			})
 			.flat()
-			.sort((a, b) => a - b)
-			.map((i) => {
-				return this.lineAt(i);
-			});
+			.sort((a, b) => a - b);
+	}
+
+	cursorLines(): string[] {
+		return this.cursorLineIndexes().map((i) => {
+			return this.lines[i];
+		});
 	}
 
 	private linesToTop(): string[] {
@@ -67,7 +88,7 @@ export class NoteEditor {
 	}
 
 	breadcrumbs(): string[] {
-		const curLine = this.lineAt(this.edges[0].top);
+		const curLine = this.lines[this.edges[0].top];
 		const depth = getIndent(curLine);
 		return this.linesToTop()
 			.filter((line) => {
@@ -89,5 +110,14 @@ export class NoteEditor {
 				return acc;
 			}, [])
 			.reverse();
+	}
+
+	replaceCursorLines(replacer: LineReplacer): NewLine[] {
+		return this.cursorLineIndexes().map((i) => {
+			return {
+				index: i,
+				text: replacer(this.lines[i]),
+			};
+		});
 	}
 }

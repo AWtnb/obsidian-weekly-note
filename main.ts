@@ -16,7 +16,7 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import { NoteEditor } from "helper/Noteeditor";
+import { NoteEditor, strikeThrough } from "helper/Noteeditor";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -196,6 +196,10 @@ export default class WeeklyNotePlugin extends Plugin {
 					.join("\n");
 				const nextPath = note.increment().path;
 				appendToFile(this.app, nextPath, appended);
+
+				ed.replaceCursorLines(strikeThrough).forEach((newLine) => {
+					editor.setLine(newLine.index, newLine.text);
+				});
 			},
 		});
 
