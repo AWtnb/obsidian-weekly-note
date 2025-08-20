@@ -188,7 +188,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const appended = [
 					"\n",
 					ed.lastPlainLine(),
-					ed.backToRoot(),
+					ed.breadcrumbs(),
 					ed.cursorLines(),
 				]
 					.filter(Boolean)

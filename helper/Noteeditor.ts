@@ -50,12 +50,12 @@ export class NoteEditor {
 			});
 	}
 
-	private rollup(): string[] {
+	private linesToTop(): string[] {
 		return this.lines.slice(0, this.edges[0].top).reverse();
 	}
 
 	lastPlainLine(): string | null {
-		const lines = this.rollup();
+		const lines = this.linesToTop();
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 			const c = line.trimStart().substring(0, 1);
@@ -66,10 +66,10 @@ export class NoteEditor {
 		return null;
 	}
 
-	backToRoot(): string[] {
+	breadcrumbs(): string[] {
 		const curLine = this.lineAt(this.edges[0].top);
 		const depth = getIndent(curLine);
-		return this.rollup()
+		return this.linesToTop()
 			.filter((line) => {
 				return getIndent(line) < depth;
 			})
