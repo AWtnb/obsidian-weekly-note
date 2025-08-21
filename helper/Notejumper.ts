@@ -1,17 +1,17 @@
-import { App, Modal, Notice } from "obsidian";
+import { App, Modal, Notice, PaneType } from "obsidian";
 import { WeeklyNote } from "./Weeklynote";
 
 const parseAsDateStr = (s: string): string => {
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = now.getMonth() + 1;
-	if (s.length == 1 || s.length == 2) {
+	if (0 < s.length && s.length <= 2) {
 		const d = Number(s);
 		if (0 < d && d <= 31) {
 			return `${year}-${month}-${s}`;
 		}
 	}
-	if (s.length == 4) {
+	if (2 < s.length && s.length <= 4) {
 		const m = Number(s.substring(0, 2));
 		if (0 < m && m <= 12) {
 			const d = Number(s.substring(2));
@@ -52,10 +52,10 @@ const asWeeklyNotePath = (ymd: string): string | null => {
 export const openNote = (
 	app: App,
 	path: string,
-	newTab: boolean = false
+	position: boolean | PaneType = true
 ): boolean => {
 	if (app.vault.getFileByPath(path)) {
-		app.workspace.openLinkText("", path, newTab);
+		app.workspace.openLinkText("", path, position);
 		return true;
 	}
 	const s = `ERROR: "${path}" not found!`;
@@ -68,10 +68,10 @@ export class JumpModal extends Modal {
 		super(app);
 	}
 
-	jumpTo(dest: string): void {
+	jumpTo(dest: string, position: boolean | PaneType): void {
 		const path = asWeeklyNotePath(dest);
 		if (path) {
-			const result = openNote(this.app, path, true);
+			const result = openNote(this.app, path, position);
 			if (result) {
 				new Notice(`Opened note containing ${dest}`, 4000);
 			}
@@ -82,6 +82,7 @@ export class JumpModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.id = "jump-modal";
+		contentEl.createEl("h2").setText("Jump to:");
 		const preview = contentEl.createDiv();
 		preview.addClass("dest-preview");
 		const input = contentEl.createEl("input", { type: "tel" });
@@ -95,15 +96,17 @@ export class JumpModal extends Modal {
 			preview.setText(dest());
 		};
 
-		const button = contentEl.createEl("button", { text: "GO" });
 		input.onkeydown = (ev) => {
 			if (ev.key == "Enter") {
 				ev.preventDefault();
-				this.jumpTo(dest());
+
+				const pos = (() => {
+					if (!this.app.workspace.getActiveFile()) return false;
+					return ev.ctrlKey ? "split" : true;
+				})();
+
+				this.jumpTo(dest(), pos);
 			}
-		};
-		button.onclick = () => {
-			this.jumpTo(dest());
 		};
 	}
 
