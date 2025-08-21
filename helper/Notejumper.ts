@@ -42,7 +42,8 @@ const asWeeklyNotePath = (ymd: string): string | null => {
 	if (0 < ymd.length) {
 		const d = new Date(ymd);
 		const monday = new Date(d);
-		monday.setDate(d.getDate() - d.getDay() + 1);
+		const offset = (d.getDay() + 6) % 7;
+		monday.setDate(d.getDate() - offset);
 		const note = new WeeklyNote(monday);
 		return note.path;
 	}

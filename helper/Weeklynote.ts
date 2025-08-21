@@ -50,7 +50,8 @@ export const fromWeek = (delta: number = 0): WeeklyNote => {
 	const now = new Date();
 	const dayOfWeek = now.getDay();
 	const monday = new Date(now);
-	monday.setDate(now.getDate() - dayOfWeek + 1 + 7 * delta);
+	const offset = (dayOfWeek + 6) % 7;
+	monday.setDate(now.getDate() - offset + 7 * delta);
 	const note = new WeeklyNote(monday);
 	return note;
 };
