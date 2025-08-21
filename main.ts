@@ -75,7 +75,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
 	private openNote(path: string) {
-		openNote(this.app, path, true);
+		openNote(this.app, path, false);
 	}
 
 	private getActiveNote(): WeeklyNote | null {
