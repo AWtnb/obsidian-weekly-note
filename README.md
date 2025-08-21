@@ -28,10 +28,9 @@ Copy over `main.js`, `styles.css`, `manifest.json` to `(VaultFolder)/.obsidian/p
 
 ## Develop / Debug
 
-Run below command after creating test vault from Obsidian.
+Run below command in Vault root directory.
 
 ```PowerShell
-# on test valult directory:
 $n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;npm install;code .;Pop-Location
 ```
 
