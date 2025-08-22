@@ -98,6 +98,30 @@ export default class WeeklyNotePlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		this.app.workspace.on("file-open", async (file: TFile | null) => {
+			if (!file) return;
+			const mdEditor = this.app.workspace.activeEditor;
+			if (!mdEditor) return;
+			if (!mdEditor.editor) return;
+			const now = new Date();
+			const today = "Aug. 21"; // あとでやる
+			const found = mdEditor.editor
+				.getValue()
+				.split("\n")
+				.map((line, i) => {
+					if (line.indexOf(today) != -1) return i;
+					return -1;
+				})
+				.filter((i) => -1 < i);
+			if (0 < found.length) {
+				const n = found[0];
+				mdEditor.editor.setSelection(
+					{ line: n, ch: 0 },
+					{ line: n, ch: mdEditor.editor.getLine(n).length }
+				);
+			}
+		});
+
 		this.addCommand({
 			id: "weeklynote-make-notes",
 			icon: "calendar-plus",
