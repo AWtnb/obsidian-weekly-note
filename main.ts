@@ -15,6 +15,7 @@ import {
 	fromWeek,
 	fromPath,
 	DEFAULT_TEMPLATE,
+	toDateString,
 } from "helper/Weeklynote";
 import { NoteEditor, strikeThrough } from "helper/Noteeditor";
 import { JumpModal, openNote } from "helper/Notejumper";
@@ -100,12 +101,12 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.app.workspace.on("file-open", async (file: TFile | null) => {
 			if (!file) return;
-			const mdEditor = this.app.workspace.activeEditor;
-			if (!mdEditor) return;
-			if (!mdEditor.editor) return;
+			const md = this.app.workspace.activeEditor;
+			if (!md || !md.editor) return;
+			const editor = md.editor;
 			const now = new Date();
-			const today = "Aug. 21"; // あとでやる
-			const found = mdEditor.editor
+			const today = toDateString(now);
+			const found = editor
 				.getValue()
 				.split("\n")
 				.map((line, i) => {
@@ -115,9 +116,9 @@ export default class WeeklyNotePlugin extends Plugin {
 				.filter((i) => -1 < i);
 			if (0 < found.length) {
 				const n = found[0];
-				mdEditor.editor.setSelection(
+				editor.setSelection(
 					{ line: n, ch: 0 },
-					{ line: n, ch: mdEditor.editor.getLine(n).length }
+					{ line: n, ch: editor.getLine(n).length }
 				);
 			}
 		});

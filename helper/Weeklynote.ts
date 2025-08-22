@@ -100,6 +100,25 @@ export const DEFAULT_TEMPLATE = [
 	"",
 ].join("\n");
 
+export const toDateString = (d: Date): string => {
+	const mon = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	][d.getMonth()];
+	const dd = padZero(d.getDate());
+	return `${mon}. ${dd}`;
+};
+
 class Holiday {
 	private readonly date: Date | null;
 	readonly name: string;
@@ -162,23 +181,8 @@ export class WeeklyNoteModal extends Modal {
 				note.start.Month - 1,
 				note.start.Day + i
 			);
-			const mon = [
-				"Jan",
-				"Feb",
-				"Mar",
-				"Apr",
-				"May",
-				"Jun",
-				"Jul",
-				"Aug",
-				"Sep",
-				"Oct",
-				"Nov",
-				"Dec",
-			][d.getMonth()];
-			const dd = padZero(d.getDate());
 			const suffix = this.getHolidaySuffix(d);
-			const date = `${mon}. ${dd} ${suffix}`.trimEnd();
+			const date = `${toDateString(d)} ${suffix}`.trimEnd();
 			const regex = new RegExp(`{{${day}}}`, "g");
 			filled = filled.replace(regex, date);
 		});
