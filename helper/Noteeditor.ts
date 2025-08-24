@@ -12,17 +12,30 @@ const toSeq = (start: number, end: number): number[] => {
 	return arr;
 };
 
-export const strikeThrough = (s: string): string => {
-	const symbol = "~~";
+interface MdList {
+	symbol: string;
+	text: string;
+}
+
+export const asMdList = (line: string): MdList => {
+	const head = line.substring(0, 2);
+	if (["- ", "+ ", "* "].includes(head)) {
+		return { symbol: head, text: line.substring(2) };
+	}
+	return { symbol: "", text: line };
+};
+
+const strikeThrough = (s: string): string => {
+	const strike = "~~";
 	const reg = new RegExp("(^\\s*)(.+)", "g");
-	return s.replace(reg, (_: string, p1: string, p2: string): string => {
-		const line = p2.trimEnd();
-		const head = line.substring(0, 2);
-		if (["- ", "+ ", "* "].includes(head)) {
-			return p1 + head + symbol + line.substring(2) + symbol;
+	return s.replace(
+		reg,
+		(_: string, indent: string, content: string): string => {
+			const line = content.trimEnd();
+			const mdLine = asMdList(line);
+			return indent + mdLine.symbol + strike + mdLine.text + strike;
 		}
-		return p1 + symbol + line + symbol;
-	});
+	);
 };
 
 interface CursorEdge {
@@ -48,9 +61,11 @@ const toEdge = (sel: EditorSelection): CursorEdge => {
 export class NoteEditor {
 	private readonly lines: string[];
 	private readonly edges: CursorEdge[];
+	private readonly editor: Editor;
 	constructor(editor: Editor) {
 		this.lines = editor.getValue().split("\n");
 		this.edges = editor.listSelections().map((sel) => toEdge(sel));
+		this.editor = editor;
 	}
 
 	private cursorLineIndexes(): number[] {
@@ -78,9 +93,8 @@ export class NoteEditor {
 	lastPlainLine(): string | null {
 		const lines = this.linesToTop();
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			const c = line.trimStart().substring(0, 1);
-			if (c && ["-", "+", "*"].indexOf(c) == -1) {
+			const line = lines[i].trim();
+			if (0 < line.length && asMdList(line).symbol.length < 1) {
 				return line;
 			}
 		}
@@ -112,12 +126,18 @@ export class NoteEditor {
 			.reverse();
 	}
 
-	replaceCursorLines(replacer: LineReplacer): NewLine[] {
+	private replaceCursorLines(replacer: LineReplacer): NewLine[] {
 		return this.cursorLineIndexes().map((i) => {
 			return {
 				index: i,
 				text: replacer(this.lines[i]),
 			};
+		});
+	}
+
+	strikeThroughCursorLines() {
+		this.replaceCursorLines(strikeThrough).forEach((newLine) => {
+			this.editor.setLine(newLine.index, newLine.text);
 		});
 	}
 }

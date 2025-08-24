@@ -17,7 +17,7 @@ import {
 	DEFAULT_TEMPLATE,
 	toDateString,
 } from "helper/Weeklynote";
-import { NoteEditor, strikeThrough } from "helper/Noteeditor";
+import { NoteEditor, asMdList } from "helper/Noteeditor";
 import { JumpModal, openNote } from "helper/Notejumper";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
@@ -217,21 +217,25 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (!note) return;
 
 				const ed = new NoteEditor(editor);
-				const appended = [
-					"\n",
-					ed.lastPlainLine(),
-					ed.breadcrumbs(),
-					ed.cursorLines(),
-				]
-					.filter(Boolean)
-					.flat()
-					.join("\n");
-				const nextPath = note.increment().path;
-				appendToFile(this.app, nextPath, appended);
+				const curLines = ed.cursorLines();
 
-				ed.replaceCursorLines(strikeThrough).forEach((newLine) => {
-					editor.setLine(newLine.index, newLine.text);
-				});
+				const appended = [];
+				if (0 < asMdList(curLines[0]).symbol.length) {
+					const lastPlain = ed.lastPlainLine();
+					if (lastPlain) {
+						appended.push(lastPlain);
+					}
+					const breadcrumbs = ed.breadcrumbs();
+					if (0 < breadcrumbs.length) {
+						appended.push(...breadcrumbs);
+					}
+				}
+				appended.push(...curLines);
+				appended.unshift("\n");
+				const nextPath = note.increment().path;
+				appendToFile(this.app, nextPath, appended.join("\n"));
+
+				ed.strikeThroughCursorLines();
 			},
 		});
 
