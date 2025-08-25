@@ -26,6 +26,7 @@ const COMMAND_OpenPrevNote = "前のノートを開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_JumpToNote = "ノートにジャンプ";
+const COMMAND_ScrollToCursor = "カーソルまでスクロール";
 
 const appendToFile = async (
 	app: App,
@@ -121,6 +122,22 @@ export default class WeeklyNotePlugin extends Plugin {
 					{ line: n, ch: editor.getLine(n).length }
 				);
 			}
+		});
+
+		this.addCommand({
+			id: "weeklynote-scroll-to-cursor",
+			icon: "move-down",
+			name: COMMAND_ScrollToCursor,
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const selTop = editor.getCursor("from").line;
+				editor.scrollIntoView(
+					{
+						from: { line: selTop, ch: 0 },
+						to: { line: selTop, ch: 0 },
+					},
+					true
+				);
+			},
 		});
 
 		this.addCommand({
