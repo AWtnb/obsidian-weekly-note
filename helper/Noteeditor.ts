@@ -12,6 +12,10 @@ const toSeq = (start: number, end: number): number[] => {
 	return arr;
 };
 
+const isMdHeading = (line: string): boolean => {
+	return /#{1,6} /.test(line);
+};
+
 interface MdList {
 	symbol: string;
 	text: string;
@@ -86,25 +90,56 @@ export class NoteEditor {
 		});
 	}
 
-	private linesToTop(): string[] {
-		return this.lines.slice(0, this.edges[0].top).reverse();
+	private get topEdge(): number {
+		return this.edges[0].top;
 	}
 
-	lastPlainLine(): string | null {
-		const lines = this.linesToTop();
+	private get bottomEdge(): number {
+		return this.edges[this.edges.length - 1].bottom;
+	}
+
+	private linesBeforeCursor(): string[] {
+		return this.lines.slice(0, this.topEdge);
+	}
+
+	private linesAfterCursor(): string[] {
+		return this.lines.slice(this.bottomEdge + 1);
+	}
+
+	nextPlainLineIndex(): number | null {
+		const lines = this.linesAfterCursor();
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i].trim();
-			if (0 < line.length && asMdList(line).symbol.length < 1) {
-				return line;
+			if (
+				0 < line.length &&
+				asMdList(line).symbol.length < 1 &&
+				!isMdHeading(line)
+			) {
+				return this.bottomEdge + 1 + i;
+			}
+		}
+		return null;
+	}
+
+	lastPlainLineIndex(): number | null {
+		const lines = this.linesBeforeCursor().reverse();
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i].trim();
+			if (
+				0 < line.length &&
+				asMdList(line).symbol.length < 1 &&
+				!isMdHeading(line)
+			) {
+				return this.topEdge - 1 - i;
 			}
 		}
 		return null;
 	}
 
 	breadcrumbs(): string[] {
-		const curLine = this.lines[this.edges[0].top];
-		const depth = getIndent(curLine);
-		return this.linesToTop()
+		const depth = getIndent(this.lines[this.topEdge]);
+		return this.linesBeforeCursor()
+			.reverse()
 			.filter((line) => {
 				return getIndent(line) < depth;
 			})

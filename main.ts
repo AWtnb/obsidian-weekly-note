@@ -27,6 +27,8 @@ const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_JumpToNote = "ノートにジャンプ";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
+const COMMAND_JumpDownToNextPlainLine = "次のプレーンな行までジャンプ";
+const COMMAND_JumpUpToLastPlainLine = "前のプレーンな行までジャンプ";
 
 const appendToFile = async (
 	app: App,
@@ -128,7 +130,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			id: "weeklynote-scroll-to-cursor",
 			icon: "move-down",
 			name: COMMAND_ScrollToCursor,
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const selTop = editor.getCursor("from").line;
 				editor.scrollIntoView(
 					{
@@ -137,6 +139,32 @@ export default class WeeklyNotePlugin extends Plugin {
 					},
 					true
 				);
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-jump-down-to-next-plain-line",
+			icon: "chevrons-down",
+			name: COMMAND_JumpDownToNextPlainLine,
+			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const ed = new NoteEditor(editor);
+				const nextPlain = ed.nextPlainLineIndex();
+				if (nextPlain) {
+					editor.setCursor(nextPlain);
+				}
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-jump-up-to-last-plain-line",
+			icon: "chevrons-up",
+			name: COMMAND_JumpUpToLastPlainLine,
+			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const ed = new NoteEditor(editor);
+				const lastPlain = ed.lastPlainLineIndex();
+				if (lastPlain) {
+					editor.setCursor(lastPlain);
+				}
 			},
 		});
 
@@ -237,10 +265,10 @@ export default class WeeklyNotePlugin extends Plugin {
 				const curLines = ed.cursorLines();
 
 				const appended = [];
-				if (0 < asMdList(curLines[0]).symbol.length) {
-					const lastPlain = ed.lastPlainLine();
+				if (0 < asMdList(curLines[0].trim()).symbol.length) {
+					const lastPlain = ed.lastPlainLineIndex();
 					if (lastPlain) {
-						appended.push(lastPlain);
+						appended.push(editor.getLine(lastPlain));
 					}
 					const breadcrumbs = ed.breadcrumbs();
 					if (0 < breadcrumbs.length) {

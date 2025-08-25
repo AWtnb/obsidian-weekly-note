@@ -4,10 +4,13 @@
 
 - `Weekly-Note: 1年分のノートを作る` Makes weekly notes for specified year.
 - `Weekly-Note: 今週のノートを開く` Opens weekly note for current week.
+- `Weekly-Note: 前のノートを開く` Opens previous weekly note.
 - `Weekly-Note: 次のノートを開く` Opens next weekly note.
 - `Weekly-Note: 次のノートに送る` Sends selected lines to next weekly note.
-- `Weekly-Note: リスト以下を選択` Selects list (and sub list).
-
+- `Weekly-Note: ノートにジャンプ` Jump to weekly note containing specific date.
+- `Weekly-Note: カーソルまでスクロール` Scroll to reveal cusor.
+- `Weekly-Note: 次のプレーンな行までジャンプ` Move cursor down to next plain line.
+- `Weekly-Note: 前のプレーンな行までジャンプ` Move cursor up to last plain line.
 
 ## Install
 
