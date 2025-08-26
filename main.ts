@@ -149,9 +149,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
 				const nextPlain = ed.nextPlainLineIndex();
-				if (nextPlain) {
-					editor.setCursor(nextPlain);
-				}
+				editor.setCursor(nextPlain || ed.maxLineIndex);
 			},
 		});
 
@@ -162,9 +160,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
 				const lastPlain = ed.lastPlainLineIndex();
-				if (lastPlain) {
-					editor.setCursor(lastPlain);
-				}
+				editor.setCursor(lastPlain || 0);
 			},
 		});
 

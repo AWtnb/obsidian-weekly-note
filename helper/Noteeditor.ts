@@ -72,6 +72,10 @@ export class NoteEditor {
 		this.editor = editor;
 	}
 
+	get maxLineIndex(): number {
+		return this.lines.length - 1;
+	}
+
 	private cursorLineIndexes(): number[] {
 		return this.edges
 			.map((edge) => {
