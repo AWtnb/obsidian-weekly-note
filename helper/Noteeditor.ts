@@ -12,10 +12,6 @@ const toSeq = (start: number, end: number): number[] => {
 	return arr;
 };
 
-const isMdHeading = (line: string): boolean => {
-	return /#{1,6} /.test(line);
-};
-
 interface MdList {
 	symbol: string;
 	text: string;
@@ -110,30 +106,22 @@ export class NoteEditor {
 		return this.lines.slice(this.bottomEdge + 1);
 	}
 
-	nextPlainLineIndex(): number | null {
+	nextNonListLineIndex(): number | null {
 		const lines = this.linesAfterCursor();
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i].trim();
-			if (
-				0 < line.length &&
-				asMdList(line).symbol.length < 1 &&
-				!isMdHeading(line)
-			) {
+			if (0 < line.length && asMdList(line).symbol.length < 1) {
 				return this.bottomEdge + 1 + i;
 			}
 		}
 		return null;
 	}
 
-	lastPlainLineIndex(): number | null {
+	lastNonListLineIndex(): number | null {
 		const lines = this.linesBeforeCursor().reverse();
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i].trim();
-			if (
-				0 < line.length &&
-				asMdList(line).symbol.length < 1 &&
-				!isMdHeading(line)
-			) {
+			if (0 < line.length && asMdList(line).symbol.length < 1) {
 				return this.topEdge - 1 - i;
 			}
 		}

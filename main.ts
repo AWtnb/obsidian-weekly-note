@@ -152,7 +152,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_JumpDownToNextPlainLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const nextPlain = ed.nextPlainLineIndex();
+				const nextPlain = ed.nextNonListLineIndex();
 				const to = nextPlain || ed.maxLineIndex;
 				editor.setCursor(to);
 				revealLine(editor, to);
@@ -165,7 +165,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_JumpUpToLastPlainLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const lastPlain = ed.lastPlainLineIndex();
+				const lastPlain = ed.lastNonListLineIndex();
 				const to = lastPlain || 0;
 				editor.setCursor(to);
 				revealLine(editor, to);
@@ -270,7 +270,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 				const appended = [];
 				if (0 < asMdList(curLines[0].trim()).symbol.length) {
-					const lastPlain = ed.lastPlainLineIndex();
+					const lastPlain = ed.lastNonListLineIndex();
 					if (lastPlain) {
 						appended.push(editor.getLine(lastPlain));
 					}
