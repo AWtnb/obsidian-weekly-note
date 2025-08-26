@@ -129,7 +129,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				.filter((i) => -1 < i);
 			if (0 < found.length) {
 				const n = found[0];
-				editor.setSelection({ line: n, ch: 0 });
+				editor.setSelection({ line: n, ch: editor.getLine(n).length });
 			}
 		});
 
