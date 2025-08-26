@@ -75,6 +75,16 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	],
 };
 
+const revealLine = (editor: Editor, lineIdx: number) => {
+	editor.scrollIntoView(
+		{
+			from: { line: lineIdx, ch: 0 },
+			to: { line: lineIdx, ch: 0 },
+		},
+		true
+	);
+};
+
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
@@ -132,13 +142,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_ScrollToCursor,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const selTop = editor.getCursor("from").line;
-				editor.scrollIntoView(
-					{
-						from: { line: selTop, ch: 0 },
-						to: { line: selTop, ch: 0 },
-					},
-					true
-				);
+				revealLine(editor, selTop);
 			},
 		});
 
@@ -149,7 +153,9 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
 				const nextPlain = ed.nextPlainLineIndex();
-				editor.setCursor(nextPlain || ed.maxLineIndex);
+				const to = nextPlain || ed.maxLineIndex;
+				editor.setCursor(to);
+				revealLine(editor, to);
 			},
 		});
 
@@ -160,7 +166,9 @@ export default class WeeklyNotePlugin extends Plugin {
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
 				const lastPlain = ed.lastPlainLineIndex();
-				editor.setCursor(lastPlain || 0);
+				const to = lastPlain || 0;
+				editor.setCursor(to);
+				revealLine(editor, to);
 			},
 		});
 
