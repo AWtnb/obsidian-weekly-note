@@ -1,5 +1,5 @@
 import { App, Modal, Notice, PaneType } from "obsidian";
-import { WeeklyNote } from "./Weeklynote";
+import { toDateString, WeeklyNote } from "./Weeklynote";
 
 const parseAsDateStr = (s: string): string => {
 	const now = new Date();
@@ -50,13 +50,41 @@ const asWeeklyNotePath = (ymd: string): string | null => {
 	return null;
 };
 
+export const focusDailyLine = (app: App, date: Date | null = null) => {
+	const md = app.workspace.activeEditor;
+	if (!md || !md.editor) return;
+	const editor = md.editor;
+	const today = toDateString(date || new Date());
+	const found = editor
+		.getValue()
+		.split("\n")
+		.map((line, i) => {
+			if (line.indexOf(today) != -1) return i;
+			return -1;
+		})
+		.filter((i) => -1 < i);
+	if (0 < found.length) {
+		const n = found[0];
+		editor.setCursor(n);
+	}
+};
+
+interface FileOpenedCallback {
+	(): void;
+}
+
 export const openNote = (
 	app: App,
 	path: string,
-	position: boolean | PaneType = true
+	position: boolean | PaneType = true,
+	onOpen: FileOpenedCallback | null = null
 ): boolean => {
 	if (app.vault.getFileByPath(path)) {
-		app.workspace.openLinkText("", path, position);
+		app.workspace.openLinkText("", path, position).then(() => {
+			if (onOpen) {
+				onOpen();
+			}
+		});
 		return true;
 	}
 	const s = `ERROR: "${path}" not found!`;
@@ -69,10 +97,13 @@ export class JumpModal extends Modal {
 		super(app);
 	}
 
-	jumpTo(dest: string, position: boolean | PaneType): void {
+	private jumpTo(dest: string, position: boolean | PaneType): void {
 		const path = asWeeklyNotePath(dest);
 		if (path) {
-			const result = openNote(this.app, path, position);
+			const result = openNote(this.app, path, position, () => {
+				const d = new Date(dest);
+				focusDailyLine(this.app, d);
+			});
 			if (result) {
 				new Notice(`Opened note containing ${dest}`, 4000);
 			}

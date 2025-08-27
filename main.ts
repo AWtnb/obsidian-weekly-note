@@ -18,7 +18,7 @@ import {
 	toDateString,
 } from "helper/Weeklynote";
 import { NoteEditor, asMdList } from "helper/Noteeditor";
-import { JumpModal, openNote } from "helper/Notejumper";
+import { focusDailyLine, JumpModal, openNote } from "helper/Notejumper";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -113,23 +113,8 @@ export default class WeeklyNotePlugin extends Plugin {
 		await this.loadSettings();
 
 		this.app.workspace.on("file-open", async (file: TFile | null) => {
-			if (!file) return;
-			const md = this.app.workspace.activeEditor;
-			if (!md || !md.editor) return;
-			const editor = md.editor;
-			const now = new Date();
-			const today = toDateString(now);
-			const found = editor
-				.getValue()
-				.split("\n")
-				.map((line, i) => {
-					if (line.indexOf(today) != -1) return i;
-					return -1;
-				})
-				.filter((i) => -1 < i);
-			if (0 < found.length) {
-				const n = found[0];
-				editor.setSelection({ line: n, ch: editor.getLine(n).length });
+			if (file) {
+				focusDailyLine(this.app);
 			}
 		});
 
