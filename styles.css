@@ -4,13 +4,17 @@
 	margin: 8px 0;
 }
 
-#jump-modal .dest-preview {
-	min-height: 1.2rem;
-}
 #jump-modal input {
 	display: block;
 	height: var(--input-height);
 	margin: 8px 0;
+}
+#jump-modal .button-box {
+	min-height: 2rem;
+}
+#jump-modal .button-box button {
+	margin-right: 4px;
+	min-width: 5rem;
 }
 
 .weeklynote-setting-box {

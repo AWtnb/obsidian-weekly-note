@@ -1,53 +1,91 @@
 import { App, Modal, Notice, PaneType } from "obsidian";
 import { toDateString, WeeklyNote } from "./Weeklynote";
 
-const parseAsDateStr = (s: string): string => {
+const splitAt = (s: string, i: number): [number, number] => {
+	const a = Number(s.substring(0, i));
+	const b = Number(s.substring(i));
+	return [a, b];
+};
+
+interface YMD {
+	y: number;
+	m: number;
+	d: number;
+}
+
+const asYMDs = (s: string): YMD[] => {
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = now.getMonth() + 1;
-	if (0 < s.length && s.length <= 2) {
-		const d = Number(s);
-		if (0 < d && d <= 31) {
-			return `${year}-${month}-${s}`;
-		}
+	const num = Number(s);
+	if (s.length < 1 || Number.isNaN(s) || num < 1) {
+		return [{ y: 0, m: 0, d: 0 }];
 	}
-	if (2 < s.length && s.length <= 4) {
-		const m = Number(s.substring(0, 2));
-		if (0 < m && m <= 12) {
-			const d = Number(s.substring(2));
-			if (0 < d && d <= 31) {
-				return `${year}-${s.substring(0, 2)}-${s.substring(2)}`;
-			}
-		}
+
+	if (s.length == 1) {
+		return [{ y: year, m: month, d: num }];
+	}
+	if (s.length == 2) {
+		const a = [{ y: year, m: month, d: num }];
+		const [m, d] = splitAt(s, 1);
+		a.push({ y: year, m: m, d: d });
+		return a;
+	}
+	if (s.length == 3) {
+		const a = [];
+		// mmd
+		const [mm, d] = splitAt(s, 2);
+		a.push({ y: year, m: mm, d: d });
+		// mdd
+		const [m, dd] = splitAt(s, 1);
+		a.push({ y: year, m: m, d: dd });
+		return a;
+	}
+	if (s.length == 4) {
+		const [mm, dd] = splitAt(s, 2);
+		return [{ y: year, m: mm, d: dd }];
+	}
+	if (s.length == 5) {
+		const a = [];
+		const yyyy = 2000 + Number(s.substring(0, 2));
+		// yymmd
+		const [mm, d] = splitAt(s.substring(2), 2);
+		a.push({ y: yyyy, m: mm, d: d });
+		// yymdd
+		const [m, dd] = splitAt(s.substring(2), 1);
+		a.push({ y: yyyy, m: m, d: dd });
+		return a;
 	}
 	if (s.length == 6) {
-		const m = Number(s.substring(4));
-		if (0 < m && m <= 12) {
-			return `${s.substring(0, 4)}-${m}-1`;
-		}
+		const yyyy = 2000 + Number(s.substring(0, 2));
+		const [mm, dd] = splitAt(s.substring(2), 2);
+		return [{ y: yyyy, m: mm, d: dd }];
+	}
+	if (s.length == 7) {
+		const a = [];
+		const yyyy = Number(s.substring(0, 4));
+		// yyyymmd
+		const [mm, d] = splitAt(s.substring(4), 2);
+		a.push({ y: yyyy, m: mm, d: d });
+		// yyyymdd
+		const [m, dd] = splitAt(s.substring(4), 1);
+		a.push({ y: yyyy, m: m, d: dd });
+		return a;
 	}
 	if (s.length == 8) {
-		const m = Number(s.substring(4, 6));
-		if (0 < m && m <= 12) {
-			const d = Number(s.substring(6));
-			if (0 < d && d <= 31) {
-				return `${s.substring(0, 4)}-${m}-${d}`;
-			}
-		}
+		const yyyy = Number(s.substring(0, 4));
+		const [mm, dd] = splitAt(s.substring(4), 2);
+		return [{ y: yyyy, m: mm, d: dd }];
 	}
-	return "";
+	return [{ y: 0, m: 0, d: 0 }];
 };
 
-const asWeeklyNotePath = (ymd: string): string | null => {
-	if (0 < ymd.length) {
-		const d = new Date(ymd);
-		const monday = new Date(d);
-		const offset = (d.getDay() + 6) % 7;
-		monday.setDate(d.getDate() - offset);
-		const note = new WeeklyNote(monday);
-		return note.path;
-	}
-	return null;
+const getNotePath = (d: Date): string => {
+	const monday = new Date(d);
+	const offset = (d.getDay() + 6) % 7;
+	monday.setDate(d.getDate() - offset);
+	const note = new WeeklyNote(monday);
+	return note.path;
 };
 
 export const focusDailyLine = (app: App, date: Date | null = null) => {
@@ -98,22 +136,20 @@ export class JumpModal extends Modal {
 	}
 
 	private jumpTo(
-		dest: string,
+		path: string,
+		date: string,
 		contextEvent: PointerEvent | KeyboardEvent
 	): void {
 		const pos = (() => {
 			if (!this.app.workspace.getActiveFile()) return false;
 			return contextEvent.ctrlKey ? "split" : true;
 		})();
-		const path = asWeeklyNotePath(dest);
-		if (path) {
-			const result = openNote(this.app, path, pos, () => {
-				const d = new Date(dest);
-				focusDailyLine(this.app, d);
-			});
-			if (result) {
-				new Notice(`Opened note containing ${dest}`, 4000);
-			}
+		const result = openNote(this.app, path, pos, () => {
+			const d = new Date(date);
+			focusDailyLine(this.app, d);
+		});
+		if (result) {
+			new Notice(`Opened note containing ${date}`, 4000);
 		}
 		this.close();
 	}
@@ -121,50 +157,56 @@ export class JumpModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.id = "jump-modal";
-		contentEl.createEl("h2").setText("Jump to:");
-		const preview = contentEl.createDiv();
-		preview.addClass("dest-preview");
+		contentEl.createDiv().setText("Jump to:");
 		const input = contentEl.createEl("input", { type: "tel" });
 		input.focus();
+
 		const box = contentEl.createDiv();
+		box.addClass("button-box");
 
 		const clearBox = () => {
-			box.childNodes.forEach((c) => box.removeChild(c));
+			while (box.firstChild) {
+				box.removeChild(box.firstChild);
+			}
 		};
 
-		const createButton = (dest: string) => {
+		interface Button {
+			label: string;
+			href: string;
+		}
+
+		const createButtonElem = (button: Button) => {
 			const b = box.createEl("button");
-			b.setText(dest);
+			b.setText(button.label);
 			b.onclick = (ev) => {
-				this.jumpTo(dest, ev);
+				this.jumpTo(button.href, button.label, ev);
 			};
 			b.onkeydown = (ev) => {
 				if (ev.key != "Enter") return;
 				ev.preventDefault();
-				this.jumpTo(dest, ev);
+				this.jumpTo(button.href, button.label, ev);
 			};
 		};
 
-		const createButtons = (dests: string[]) => {
-			clearBox();
-			dests.forEach((dest) => {
-				createButton(dest);
-			});
-		};
-
-		const dest = (): string => {
-			return parseAsDateStr(input.value);
-		};
-
 		input.oninput = () => {
-			preview.setText(dest());
-		};
-
-		input.onkeydown = (ev) => {
-			if (ev.key == "Enter") {
-				ev.preventDefault();
-				this.jumpTo(dest(), ev);
-			}
+			clearBox();
+			asYMDs(input.value)
+				.map((ymd): Button | null => {
+					const label = `${ymd.y}-${ymd.m}-${ymd.d}`;
+					if (Number.isNaN(Date.parse(label))) {
+						return null;
+					}
+					const d = new Date(label);
+					return {
+						label: label,
+						href: getNotePath(d),
+					};
+				})
+				.forEach((b) => {
+					if (b) {
+						createButtonElem(b);
+					}
+				});
 		};
 	}
 
