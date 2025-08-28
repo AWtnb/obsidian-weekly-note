@@ -97,10 +97,17 @@ export class JumpModal extends Modal {
 		super(app);
 	}
 
-	private jumpTo(dest: string, position: boolean | PaneType): void {
+	private jumpTo(
+		dest: string,
+		contextEvent: PointerEvent | KeyboardEvent
+	): void {
+		const pos = (() => {
+			if (!this.app.workspace.getActiveFile()) return false;
+			return contextEvent.ctrlKey ? "split" : true;
+		})();
 		const path = asWeeklyNotePath(dest);
 		if (path) {
-			const result = openNote(this.app, path, position, () => {
+			const result = openNote(this.app, path, pos, () => {
 				const d = new Date(dest);
 				focusDailyLine(this.app, d);
 			});
@@ -119,6 +126,31 @@ export class JumpModal extends Modal {
 		preview.addClass("dest-preview");
 		const input = contentEl.createEl("input", { type: "tel" });
 		input.focus();
+		const box = contentEl.createDiv();
+
+		const clearBox = () => {
+			box.childNodes.forEach((c) => box.removeChild(c));
+		};
+
+		const createButton = (dest: string) => {
+			const b = box.createEl("button");
+			b.setText(dest);
+			b.onclick = (ev) => {
+				this.jumpTo(dest, ev);
+			};
+			b.onkeydown = (ev) => {
+				if (ev.key != "Enter") return;
+				ev.preventDefault();
+				this.jumpTo(dest, ev);
+			};
+		};
+
+		const createButtons = (dests: string[]) => {
+			clearBox();
+			dests.forEach((dest) => {
+				createButton(dest);
+			});
+		};
 
 		const dest = (): string => {
 			return parseAsDateStr(input.value);
@@ -131,13 +163,7 @@ export class JumpModal extends Modal {
 		input.onkeydown = (ev) => {
 			if (ev.key == "Enter") {
 				ev.preventDefault();
-
-				const pos = (() => {
-					if (!this.app.workspace.getActiveFile()) return false;
-					return ev.ctrlKey ? "split" : true;
-				})();
-
-				this.jumpTo(dest(), pos);
+				this.jumpTo(dest(), ev);
 			}
 		};
 	}
