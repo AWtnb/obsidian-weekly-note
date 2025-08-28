@@ -16,8 +16,8 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import { NoteEditor, asMdList } from "helper/NoteEditor2";
-import { focusDailyLine, JumpModal, openNote } from "helper/NoteJumper2";
+import { NoteEditor, asMdList } from "helper/NoteEditor";
+import { focusDailyLine, JumpModal, openNote } from "helper/NoteJumper";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
