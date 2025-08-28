@@ -138,7 +138,7 @@ export class JumpModal extends Modal {
 	private jumpTo(
 		path: string,
 		date: string,
-		contextEvent: PointerEvent | KeyboardEvent
+		contextEvent: KeyboardEvent | MouseEvent
 	): void {
 		const pos = (() => {
 			if (!this.app.workspace.getActiveFile()) return false;
