@@ -13,71 +13,72 @@ interface YMD {
 	d: number;
 }
 
+const asYMD = (y: number, m: number, d: number): YMD => {
+	return { y: y, m: m, d: d };
+};
+
 const asYMDs = (s: string): YMD[] => {
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = now.getMonth() + 1;
 	const num = Number(s);
 	if (s.length < 1 || Number.isNaN(s) || num < 1) {
-		return [{ y: 0, m: 0, d: 0 }];
+		return [asYMD(0, 0, 0)];
 	}
 
 	if (s.length == 1) {
-		return [{ y: year, m: month, d: num }];
+		return [asYMD(year, month, num)];
 	}
 	if (s.length == 2) {
-		const a = [{ y: year, m: month, d: num }];
+		const a = [asYMD(year, month, num)];
 		const [m, d] = splitAt(s, 1);
-		a.push({ y: year, m: m, d: d });
+		a.push(asYMD(year, m, d));
 		return a;
 	}
 	if (s.length == 3) {
 		const a = [];
 		// mmd
 		const [mm, d] = splitAt(s, 2);
-		a.push({ y: year, m: mm, d: d });
+		a.push(asYMD(year, mm, d));
 		// mdd
 		const [m, dd] = splitAt(s, 1);
-		a.push({ y: year, m: m, d: dd });
+		a.push(asYMD(year, m, dd));
 		return a;
 	}
 	if (s.length == 4) {
 		const [mm, dd] = splitAt(s, 2);
-		return [{ y: year, m: mm, d: dd }];
+		return [asYMD(year, mm, dd)];
 	}
 	if (s.length == 5) {
 		const a = [];
 		const yyyy = 2000 + Number(s.substring(0, 2));
 		// yymmd
 		const [mm, d] = splitAt(s.substring(2), 2);
-		a.push({ y: yyyy, m: mm, d: d });
+		a.push(asYMD(yyyy, mm, d));
 		// yymdd
 		const [m, dd] = splitAt(s.substring(2), 1);
-		a.push({ y: yyyy, m: m, d: dd });
+		a.push(asYMD(yyyy, m, dd));
 		return a;
 	}
 	if (s.length == 6) {
 		const yyyy = 2000 + Number(s.substring(0, 2));
 		const [mm, dd] = splitAt(s.substring(2), 2);
-		return [{ y: yyyy, m: mm, d: dd }];
+		return [asYMD(yyyy, mm, dd)];
 	}
 	if (s.length == 7) {
 		const a = [];
 		const yyyy = Number(s.substring(0, 4));
 		// yyyymmd
 		const [mm, d] = splitAt(s.substring(4), 2);
-		a.push({ y: yyyy, m: mm, d: d });
+		a.push(asYMD(yyyy, mm, d));
 		// yyyymdd
 		const [m, dd] = splitAt(s.substring(4), 1);
-		a.push({ y: yyyy, m: m, d: dd });
+		a.push(asYMD(yyyy, m, dd));
 		return a;
 	}
-	if (s.length == 8) {
-		const yyyy = Number(s.substring(0, 4));
-		const [mm, dd] = splitAt(s.substring(4), 2);
-		return [{ y: yyyy, m: mm, d: dd }];
-	}
-	return [{ y: 0, m: 0, d: 0 }];
+	const yyyy = Number(s.substring(0, 4));
+	const [mm, dd] = splitAt(s.substring(4, 8), 2);
+	return [asYMD(yyyy, mm, dd)];
 };
 
 const getNotePath = (d: Date): string => {
