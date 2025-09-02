@@ -209,6 +209,17 @@ export class JumpModal extends Modal {
 					}
 				});
 		};
+		input.onkeydown = (ev) => {
+			if (ev.key != "Enter") {
+				return;
+			}
+			ev.preventDefault();
+			const buttons =
+				this.contentEl.querySelectorAll(".button-box button");
+			if (0 < buttons.length) {
+				(buttons[0] as HTMLElement).focus();
+			}
+		};
 	}
 
 	onClose() {
