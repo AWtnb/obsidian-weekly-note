@@ -40,18 +40,17 @@ const appendToFile = async (
 		return;
 	}
 	const lines = (await app.vault.read(file)).split("\n");
-	const found = lines.indexOf(appended[0]);
+	const found = lines.lastIndexOf(appended[0]);
 	if (found != -1) {
-		let i = found;
-		let nextLine = lines[i + 1];
-		while (nextLine && 0 < nextLine.trim().length) {
+		let i = found + 1;
+		while (i < lines.length && 0 < lines[i].trim().length) {
 			i++;
-			nextLine = lines[i];
 		}
-		const newLines =
-			i == lines.length - 1
-				? [lines, appended.slice(1)].flat()
-				: [lines.slice(0, i), appended.slice(1), lines.slice(i)].flat();
+		const newLines = [
+			lines.slice(0, i),
+			appended.slice(1),
+			lines.slice(i),
+		].flat();
 		await app.vault.modify(file, newLines.join("\n"));
 	} else {
 		await app.vault.append(file, "\n\n" + appended.join("\n"));
