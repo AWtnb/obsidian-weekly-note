@@ -32,16 +32,31 @@ const COMMAND_JumpUpToLastPlainLine = "前のプレーンな行までジャン�
 const appendToFile = async (
 	app: App,
 	path: string,
-	content: string
+	appended: string[]
 ): Promise<void> => {
 	const file = app.vault.getFileByPath(path);
-	if (file instanceof TFile) {
-		await app.vault.append(file, content);
-		new Notice(`Appended to: ${path}`);
+	if (!(file instanceof TFile)) {
+		new Notice(`ERROR: Failed to append to "${path}" (file not found)`, 0);
 		return;
 	}
-	const s = `ERROR: Failed to append to "${path}" (file not found)`;
-	new Notice(s, 0);
+	const lines = (await app.vault.read(file)).split("\n");
+	const found = lines.indexOf(appended[0]);
+	if (found != -1) {
+		let i = found;
+		let nextLine = lines[i + 1];
+		while (nextLine && 0 < nextLine.trim().length) {
+			i++;
+			nextLine = lines[i];
+		}
+		const newLines =
+			i == lines.length - 1
+				? [lines, appended.slice(1)].flat()
+				: [lines.slice(0, i), appended.slice(1), lines.slice(i)].flat();
+		await app.vault.modify(file, newLines.join("\n"));
+	} else {
+		await app.vault.append(file, "\n\n" + appended.join("\n"));
+	}
+	new Notice(`Appended to: ${path}`);
 };
 
 interface WeeklyNoteSettings {
@@ -261,9 +276,8 @@ export default class WeeklyNotePlugin extends Plugin {
 					}
 				}
 				appended.push(...curLines);
-				appended.unshift("\n");
 				const nextPath = note.increment().path;
-				appendToFile(this.app, nextPath, appended.join("\n"));
+				appendToFile(this.app, nextPath, appended);
 
 				ed.strikeThroughCursorLines();
 			},
