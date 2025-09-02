@@ -27,10 +27,10 @@ const asYMDs = (s: string): YMD[] => {
 	}
 
 	if (s.length == 1) {
-		return [asYMD(year, month, num)];
+		return [asYMD(year, month, num), asYMD(year, num, 1)];
 	}
 	if (s.length == 2) {
-		const a = [asYMD(year, month, num)];
+		const a = [asYMD(year, month, num), asYMD(year, num, 1)];
 		const [m, d] = splitAt(s, 1);
 		a.push(asYMD(year, m, d));
 		return a;
@@ -43,11 +43,21 @@ const asYMDs = (s: string): YMD[] => {
 		// mdd
 		const [m, dd] = splitAt(s, 1);
 		a.push(asYMD(year, m, dd));
+		// yym(1)
+		a.push(asYMD(2000 + mm, d, 1));
 		return a;
 	}
 	if (s.length == 4) {
+		const a = [];
+		// mmdd
 		const [mm, dd] = splitAt(s, 2);
-		return [asYMD(year, mm, dd)];
+		a.push(asYMD(year, mm, dd));
+		// yymm(1)
+		a.push(asYMD(2000 + mm, dd, 1));
+		// yymd
+		const [m, d] = splitAt(String(dd), 1);
+		a.push(asYMD(2000 + mm, m, d));
+		return a;
 	}
 	if (s.length == 5) {
 		const a = [];
@@ -58,12 +68,21 @@ const asYMDs = (s: string): YMD[] => {
 		// yymdd
 		const [m, dd] = splitAt(s.substring(2), 1);
 		a.push(asYMD(yyyy, m, dd));
+		// yyyym(1)
+		a.push(asYMD(...splitAt(s, 4), 1));
 		return a;
 	}
 	if (s.length == 6) {
+		const a = [];
+		// yymmdd
 		const yyyy = 2000 + Number(s.substring(0, 2));
 		const [mm, dd] = splitAt(s.substring(2), 2);
-		return [asYMD(yyyy, mm, dd)];
+		a.push(asYMD(yyyy, mm, dd));
+		// yyyymd
+		a.push(asYMD(...splitAt(s.substring(0, 5), 4), Number(s.substring(5))));
+		// yyyymm(1)
+		a.push(asYMD(...splitAt(s.substring(0, 6), 4), 1));
+		return a;
 	}
 	if (s.length == 7) {
 		const a = [];
