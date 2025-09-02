@@ -127,9 +127,13 @@ export default class WeeklyNotePlugin extends Plugin {
 		await this.loadSettings();
 
 		this.app.workspace.on("file-open", async (file: TFile | null) => {
-			if (file) {
-				focusDailyLine(this.app);
+			if (!file) {
+				return;
 			}
+			if (this.app.workspace.getLeavesOfType("markdown").length !== 1) {
+				return;
+			}
+			focusDailyLine(this.app);
 		});
 
 		this.addCommand({
