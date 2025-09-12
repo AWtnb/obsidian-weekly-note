@@ -15,14 +15,20 @@ const toSeq = (start: number, end: number): number[] => {
 interface MdList {
 	symbol: string;
 	text: string;
+	filled: boolean;
 }
+
+const checkFilledMdTask = (s: string): boolean => {
+	return s.substring(0, 3) === "[x]";
+};
 
 export const asMdList = (line: string): MdList => {
 	const head = line.substring(0, 2);
 	if (["- ", "+ ", "* "].includes(head)) {
-		return { symbol: head, text: line.substring(2) };
+		const t = line.substring(2);
+		return { symbol: head, text: t, filled: checkFilledMdTask(t) };
 	}
-	return { symbol: "", text: line };
+	return { symbol: "", text: line, filled: checkFilledMdTask(line) };
 };
 
 const strikeThrough = (s: string): string => {
@@ -106,23 +112,29 @@ export class NoteEditor {
 		return this.lines.slice(this.bottomEdge + 1);
 	}
 
-	nextNonListLineIndex(): number | null {
+	nextListRootLineIndex(): number | null {
 		const lines = this.linesAfterCursor();
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
-			if (0 < line.length && asMdList(line).symbol.length < 1) {
-				return this.bottomEdge + 1 + i;
+			const line = lines[i];
+			if (0 < line.length) {
+				const ml = asMdList(line);
+				if (0 < ml.symbol.length && !ml.filled) {
+					return this.bottomEdge + 1 + i;
+				}
 			}
 		}
 		return null;
 	}
 
-	lastNonListLineIndex(): number | null {
+	lastListRootLineIndex(): number | null {
 		const lines = this.linesBeforeCursor().reverse();
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
-			if (0 < line.length && asMdList(line).symbol.length < 1) {
-				return this.topEdge - 1 - i;
+			const line = lines[i];
+			if (0 < line.length) {
+				const ml = asMdList(line);
+				if (0 < ml.symbol.length && !ml.filled) {
+					return this.topEdge - 1 - i;
+				}
 			}
 		}
 		return null;

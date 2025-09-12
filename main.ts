@@ -26,8 +26,8 @@ const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_JumpToNote = "ノートにジャンプ";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
-const COMMAND_JumpDownToNextPlainLine = "次のプレーンな行までジャンプ";
-const COMMAND_JumpUpToLastPlainLine = "前のプレーンな行までジャンプ";
+const COMMAND_JumpToNextListRoot = "次のリストまでジャンプ";
+const COMMAND_JumpToLastListRoot = "前のリストまでジャンプ";
 
 const appendToFile = async (
 	app: App,
@@ -146,26 +146,26 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-down-to-next-plain-line",
+			id: "weeklynote-jump-to-next-list-root",
 			icon: "chevrons-down",
-			name: COMMAND_JumpDownToNextPlainLine,
+			name: COMMAND_JumpToNextListRoot,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const nextPlain = ed.nextNonListLineIndex();
-				const to = nextPlain || ed.maxLineIndex;
+				const nextListRoot = ed.nextListRootLineIndex();
+				const to = nextListRoot || ed.maxLineIndex;
 				editor.setCursor(to);
 				revealLine(editor, to);
 			},
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-up-to-last-plain-line",
+			id: "weeklynote-jump-to-last-list-root",
 			icon: "chevrons-up",
-			name: COMMAND_JumpUpToLastPlainLine,
+			name: COMMAND_JumpToLastListRoot,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const lastPlain = ed.lastNonListLineIndex();
-				const to = lastPlain || 0;
+				const lastListRoot = ed.lastListRootLineIndex();
+				const to = lastListRoot || 0;
 				editor.setCursor(to);
 				revealLine(editor, to);
 			},
@@ -269,7 +269,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 				const appended = [];
 				if (0 < asMdList(curLines[0].trim()).symbol.length) {
-					const lastPlain = ed.lastNonListLineIndex();
+					const lastPlain = ed.lastListRootLineIndex();
 					if (lastPlain) {
 						appended.push(editor.getLine(lastPlain));
 					}
