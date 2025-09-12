@@ -9,8 +9,8 @@
 - `Weekly-Note: 次のノートに送る` Sends selected lines to next weekly note.
 - `Weekly-Note: ノートにジャンプ` Jump to weekly note containing specific date.
 - `Weekly-Note: カーソルまでスクロール` Scroll to reveal cusor.
-- `Weekly-Note: 次のプレーンな行までジャンプ` Move cursor down to next plain line.
-- `Weekly-Note: 前のプレーンな行までジャンプ` Move cursor up to last plain line.
+- `Weekly-Note: 次の未完了リスト項目までジャンプ` Move cursor down to next unfinished list item.
+- `Weekly-Note: 前の未完了リスト項目までジャンプ` Move cursor up to last unfinished list item.
 
 ## Install
 

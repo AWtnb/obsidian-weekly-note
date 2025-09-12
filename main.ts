@@ -26,8 +26,8 @@ const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_JumpToNote = "ノートにジャンプ";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
-const COMMAND_JumpToNextListRoot = "次のリストまでジャンプ";
-const COMMAND_JumpToLastListRoot = "前のリストまでジャンプ";
+const COMMAND_JumpToNextListRoot = "次の未完了リスト項目までジャンプ";
+const COMMAND_JumpToLastListRoot = "前の未完了リスト項目までジャンプ";
 
 const appendToFile = async (
 	app: App,
