@@ -16,7 +16,12 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import { NoteEditor, asMdList } from "helper/NoteEditor";
+import {
+	NoteEditor,
+	asMdList,
+	nonListLine,
+	unFinishedListRoot,
+} from "helper/NoteEditor";
 import { focusDailyLine, JumpModal, openNote } from "helper/NoteJumper";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
@@ -26,8 +31,10 @@ const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_JumpToNote = "ノートにジャンプ";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
-const COMMAND_JumpToNextListRoot = "次の未完了リスト項目までジャンプ";
-const COMMAND_JumpToLastListRoot = "前の未完了リスト項目までジャンプ";
+const COMMAND_JumpToNextUnFinishedListRoot = "次の未完了リスト項目までジャンプ";
+const COMMAND_JumpToLastUnFinishedListRoot = "前の未完了リスト項目までジャンプ";
+const COMMAND_JumpToNextNonListLine = "次の非リスト行までジャンプ";
+const COMMAND_JumpToLastNonListLine = "前の非リスト行までジャンプ";
 
 const appendToFile = async (
 	app: App,
@@ -146,12 +153,12 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-to-next-list-root",
-			icon: "chevrons-down",
-			name: COMMAND_JumpToNextListRoot,
+			id: "weeklynote-jump-to-next-unfinished-list-root",
+			icon: "circle-chevron-down",
+			name: COMMAND_JumpToNextUnFinishedListRoot,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const nextListRoot = ed.nextListRootLineIndex();
+				const nextListRoot = ed.getNextLineIndex(unFinishedListRoot);
 				const to = nextListRoot || ed.maxLineIndex;
 				editor.setCursor(to);
 				revealLine(editor, to);
@@ -159,13 +166,39 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-to-last-list-root",
-			icon: "chevrons-up",
-			name: COMMAND_JumpToLastListRoot,
+			id: "weeklynote-jump-to-last-unfinished-list-root",
+			icon: "circle-chevron-up",
+			name: COMMAND_JumpToLastUnFinishedListRoot,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const lastListRoot = ed.lastListRootLineIndex();
+				const lastListRoot = ed.getLastLineIndex(unFinishedListRoot);
 				const to = lastListRoot || 0;
+				editor.setCursor(to);
+				revealLine(editor, to);
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-jump-to-next-non-list-line",
+			icon: "chevrons-down",
+			name: COMMAND_JumpToNextNonListLine,
+			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const ed = new NoteEditor(editor);
+				const nextPlain = ed.getNextLineIndex(nonListLine);
+				const to = nextPlain || ed.maxLineIndex;
+				editor.setCursor(to);
+				revealLine(editor, to);
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-jump-to-last-non-list-line",
+			icon: "chevrons-up",
+			name: COMMAND_JumpToLastNonListLine,
+			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const ed = new NoteEditor(editor);
+				const lastPlain = ed.getLastLineIndex(nonListLine);
+				const to = lastPlain || 0;
 				editor.setCursor(to);
 				revealLine(editor, to);
 			},
@@ -269,7 +302,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 				const appended = [];
 				if (0 < asMdList(curLines[0].trim()).symbol.length) {
-					const lastPlain = ed.lastListRootLineIndex();
+					const lastPlain = ed.getLastLineIndex(nonListLine);
 					if (lastPlain) {
 						appended.push(editor.getLine(lastPlain));
 					}

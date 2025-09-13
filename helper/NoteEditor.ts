@@ -15,7 +15,7 @@ const toSeq = (start: number, end: number): number[] => {
 interface MdList {
 	symbol: string;
 	text: string;
-	filled: boolean;
+	finished: boolean;
 }
 
 const checkFilledMdTask = (s: string): boolean => {
@@ -26,9 +26,9 @@ export const asMdList = (line: string): MdList => {
 	const head = line.substring(0, 2);
 	if (["- ", "+ ", "* "].includes(head)) {
 		const t = line.substring(2);
-		return { symbol: head, text: t, filled: checkFilledMdTask(t) };
+		return { symbol: head, text: t, finished: checkFilledMdTask(t) };
 	}
-	return { symbol: "", text: line, filled: checkFilledMdTask(line) };
+	return { symbol: "", text: line, finished: checkFilledMdTask(line) };
 };
 
 const strikeThrough = (s: string): string => {
@@ -57,6 +57,24 @@ interface NewLine {
 	index: number;
 	text: string;
 }
+
+interface LineChecker {
+	(line: string): boolean;
+}
+
+export const unFinishedListRoot: LineChecker = (line: string): boolean => {
+	const l = line.trim();
+	if (0 < l.length) {
+		const ml = asMdList(l);
+		return 0 < ml.symbol.length && !ml.finished;
+	}
+	return false;
+};
+
+export const nonListLine: LineChecker = (line: string): boolean => {
+	const l = line.trim();
+	return 0 < l.length && asMdList(l).symbol.length < 1;
+};
 
 const toEdge = (sel: EditorSelection): CursorEdge => {
 	const a = sel.anchor.line;
@@ -112,29 +130,21 @@ export class NoteEditor {
 		return this.lines.slice(this.bottomEdge + 1);
 	}
 
-	nextListRootLineIndex(): number | null {
+	getNextLineIndex(checker: LineChecker): number | null {
 		const lines = this.linesAfterCursor();
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (0 < line.length) {
-				const ml = asMdList(line);
-				if (0 < ml.symbol.length && !ml.filled) {
-					return this.bottomEdge + 1 + i;
-				}
+			if (checker(lines[i])) {
+				return this.bottomEdge + 1 + i;
 			}
 		}
 		return null;
 	}
 
-	lastListRootLineIndex(): number | null {
+	getLastLineIndex(checker: LineChecker): number | null {
 		const lines = this.linesBeforeCursor().reverse();
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (0 < line.length) {
-				const ml = asMdList(line);
-				if (0 < ml.symbol.length && !ml.filled) {
-					return this.topEdge - 1 - i;
-				}
+			if (checker(lines[i])) {
+				return this.topEdge - 1 - i;
 			}
 		}
 		return null;
