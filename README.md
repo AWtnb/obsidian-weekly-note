@@ -7,10 +7,13 @@
 - `Weekly-Note: 前のノートを開く` Opens previous weekly note.
 - `Weekly-Note: 次のノートを開く` Opens next weekly note.
 - `Weekly-Note: 次のノートに送る` Sends selected lines to next weekly note.
-- `Weekly-Note: ノートにジャンプ` Jump to weekly note containing specific date.
-- `Weekly-Note: カーソルまでスクロール` Scroll to reveal cusor.
-- `Weekly-Note: 次の未完了リスト項目までジャンプ` Move cursor down to next unfinished list item.
-- `Weekly-Note: 前の未完了リスト項目までジャンプ` Move cursor up to last unfinished list item.
+- `Weekly-Note: ノートにジャンプ` Opens modal to jump to weekly note containing specific date.
+- `Weekly-Note: カーソルまでスクロール` Scrolls to reveal cusor.
+- `Weekly-Note: 次の未完了リスト項目までジャンプ` Moves cursor down to next unfinished list item.
+- `Weekly-Note: 前の未完了リスト項目までジャンプ` Moves cursor up to last unfinished list item.
+- `Weekly-Note: 次の非リスト行までジャンプ` Moves cursot to next non-list-line;
+- `Weekly-Note: 前の非リスト行までジャンプ` Moves cursot to last non-list-line;
+
 
 ## Install
 
