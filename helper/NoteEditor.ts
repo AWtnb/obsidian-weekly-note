@@ -1,6 +1,6 @@
 import { Editor, EditorSelection } from "obsidian";
 
-const getIndent = (s: string): number => {
+export const getIndent = (s: string): number => {
 	return s.length - s.trimStart().length;
 };
 
@@ -29,6 +29,10 @@ export const asMdList = (line: string): MdList => {
 		return { symbol: head, text: t, finished: checkFilledMdTask(t) };
 	}
 	return { symbol: "", text: line, finished: checkFilledMdTask(line) };
+};
+
+export const isMdList = (line: string): boolean => {
+	return 0 < asMdList(line.trim()).symbol.length;
 };
 
 const strikeThrough = (s: string): string => {
@@ -150,13 +154,12 @@ export class NoteEditor {
 		return null;
 	}
 
-	breadcrumbs(): string[] {
+	breadcrumb(): string[] {
 		const depth = getIndent(this.lines[this.topEdge]);
 		return this.linesBeforeCursor()
 			.reverse()
-			.filter((line) => {
-				return getIndent(line) < depth;
-			})
+			.filter((line) => 0 < line.trim().length)
+			.filter((line) => getIndent(line) < depth)
 			.reduce((acc: string[], s: string) => {
 				const last = acc.at(-1);
 				if (!last || getIndent(last) != 0) {
