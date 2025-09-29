@@ -1,4 +1,12 @@
-import { getIndent } from "./NoteEditor";
+import { App, Notice, TFile, Editor, MarkdownView } from "obsidian";
+import {
+	getIndent,
+	getLinesBlock,
+	isMdList,
+	nonListLine,
+	NoteEditor,
+} from "./NoteEditor";
+import { fromPath } from "./Weeklynote";
 
 /*
 With markdown list as below,
@@ -178,7 +186,7 @@ const mergedLine = (offset: number, text: string): MergedLine => {
 	return { offset: offset, text: text };
 };
 
-export const findMergedLine = (
+const findMergedLine = (
 	baseLines: string[],
 	breadcrumb: string[]
 ): MergedLine | null => {
@@ -208,4 +216,100 @@ export const findMergedLine = (
 		}
 	}
 	return mergedLine(baseLines.length, bcString);
+};
+
+interface Task {
+	heading: string;
+	breadcrumb: string[];
+	content: string;
+}
+
+export class SentTask implements Task {
+	heading: string = "";
+	breadcrumb: string[] = [];
+	content: string = "";
+}
+
+const appendToFile = async (
+	app: App,
+	path: string,
+	task: SentTask
+): Promise<void> => {
+	const file = app.vault.getFileByPath(path);
+	if (!(file instanceof TFile)) {
+		new Notice(`ERROR: Failed to append to "${path}" (file not found)`, 0);
+		return;
+	}
+	const lines = (await app.vault.read(file)).split("\n");
+	const found = lines.lastIndexOf(task.heading);
+	if (found != -1) {
+		const start = found + 1;
+		const baseListLines = getLinesBlock(lines, start);
+		const merged = findMergedLine(baseListLines, task.breadcrumb);
+		if (!merged) {
+			return;
+		}
+		const newLines = [
+			lines.slice(0, start + merged.offset),
+			merged.text,
+			baseListLines.slice(start + merged.offset),
+		].flat();
+		await app.vault.modify(file, newLines.join("\n") + "\n");
+	} else {
+		const newLines = [task.heading, task.breadcrumb, task.content]
+			.flat()
+			.filter((line) => 0 < line.trim().length);
+		await app.vault.append(file, "\n\n" + newLines.join("\n") + "\n");
+	}
+	new Notice(`Appended to: ${path}`);
+};
+
+export const sendTask = (
+	app: App,
+	editor: Editor,
+	view: MarkdownView
+): void => {
+	const file = view.file;
+	if (!file) return;
+	const note = fromPath(file.path);
+	if (!note) return;
+
+	const ed = new NoteEditor(editor);
+	const curLines = ed.cursorLines().filter((line) => 0 < line.trim().length);
+	if (curLines.length < 1) {
+		return;
+	}
+
+	const sent = new SentTask();
+	const breadcrumb = ed.breadcrumb();
+	if (0 < breadcrumb.length) {
+		sent.content = curLines.join("\n");
+		if (isMdList(breadcrumb[0])) {
+			sent.breadcrumb = breadcrumb;
+			const lastPlain = ed.getLastLineIndex(nonListLine);
+			if (lastPlain) {
+				sent.heading = editor.getLine(lastPlain);
+			}
+		} else {
+			sent.breadcrumb = breadcrumb.slice(1);
+			sent.heading = breadcrumb[0];
+		}
+	} else {
+		const topLine = curLines[0];
+		if (isMdList(topLine)) {
+			const lastPlain = ed.getLastLineIndex(nonListLine);
+			if (lastPlain) {
+				sent.heading = editor.getLine(lastPlain);
+			}
+			sent.content = curLines.join("\n");
+		} else {
+			sent.heading = topLine;
+			sent.content = curLines.slice(1).join("\n");
+		}
+	}
+
+	const nextPath = note.increment().path;
+	appendToFile(app, nextPath, sent);
+
+	ed.strikeThroughCursorLines();
 };

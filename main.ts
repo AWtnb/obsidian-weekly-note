@@ -16,14 +16,9 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import {
-	NoteEditor,
-	isMdList,
-	nonListLine,
-	unFinishedListRoot,
-} from "helper/NoteEditor";
+import { NoteEditor, nonListLine, unFinishedListRoot } from "helper/NoteEditor";
 import { focusDailyLine, DateInputModal, openNote } from "helper/NoteSwitcher";
-import { findMergedLine } from "helper/ListMerger";
+import { sendTask } from "helper/ListMerger";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -39,58 +34,6 @@ const COMMAND_JumpToNextUnFinishedListRoot = "次の未完了リスト項目ま�
 const COMMAND_JumpToLastUnFinishedListRoot = "前の未完了リスト項目までジャンプ";
 const COMMAND_JumpToNextNonListLine = "次の非リスト行までジャンプ";
 const COMMAND_JumpToLastNonListLine = "前の非リスト行までジャンプ";
-
-interface Task {
-	heading: string;
-	breadcrumb: string[];
-	content: string;
-}
-
-class SentTask implements Task {
-	heading: string = "";
-	breadcrumb: string[] = [];
-	content: string = "";
-}
-
-const appendToFile = async (
-	app: App,
-	path: string,
-	task: SentTask
-): Promise<void> => {
-	const file = app.vault.getFileByPath(path);
-	if (!(file instanceof TFile)) {
-		new Notice(`ERROR: Failed to append to "${path}" (file not found)`, 0);
-		return;
-	}
-	const lines = (await app.vault.read(file)).split("\n");
-	const found = lines.lastIndexOf(task.heading);
-	if (found != -1) {
-		let i = found + 1;
-		while (i < lines.length && 0 < lines[i].trim().length) {
-			i++;
-		}
-
-		const baseListLines = lines.slice(0, i);
-		const restLines = lines.slice(i);
-		const merged = findMergedLine(baseListLines, task.breadcrumb);
-		if (!merged) {
-			return;
-		}
-		const newLines = [
-			baseListLines.slice(0, merged.offset),
-			merged.text,
-			baseListLines.slice(merged.offset),
-			restLines,
-		].flat();
-		await app.vault.modify(file, newLines.join("\n"));
-	} else {
-		const newLines = [task.heading, task.breadcrumb, task.content]
-			.flat()
-			.filter((line) => 0 < line.trim().length);
-		await app.vault.append(file, "\n\n" + newLines.join("\n"));
-	}
-	new Notice(`Appended to: ${path}`);
-};
 
 interface WeeklyNoteSettings {
 	template: string;
@@ -362,51 +305,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "forward",
 			name: COMMAND_SendToNextNote,
 			editorCallback: (editor: Editor, view: MarkdownView): void => {
-				const file = view.file;
-				if (!file) return;
-				const note = fromPath(file.path);
-				if (!note) return;
-
-				const ed = new NoteEditor(editor);
-				const curLines = ed
-					.cursorLines()
-					.filter((line) => 0 < line.trim().length);
-				if (curLines.length < 1) {
-					return;
-				}
-
-				const sent = new SentTask();
-				const breadcrumb = ed.breadcrumb();
-				if (0 < breadcrumb.length) {
-					sent.content = curLines.join("\n");
-					if (isMdList(breadcrumb[0])) {
-						sent.breadcrumb = breadcrumb;
-						const lastPlain = ed.getLastLineIndex(nonListLine);
-						if (lastPlain) {
-							sent.heading = editor.getLine(lastPlain);
-						}
-					} else {
-						sent.breadcrumb = breadcrumb.slice(1);
-						sent.heading = breadcrumb[0];
-					}
-				} else {
-					const topLine = curLines[0];
-					if (isMdList(topLine)) {
-						const lastPlain = ed.getLastLineIndex(nonListLine);
-						if (lastPlain) {
-							sent.heading = editor.getLine(lastPlain);
-						}
-						sent.content = curLines.join("\n");
-					} else {
-						sent.heading = topLine;
-						sent.content = curLines.slice(1).join("\n");
-					}
-				}
-
-				const nextPath = note.increment().path;
-				appendToFile(this.app, nextPath, sent);
-
-				ed.strikeThroughCursorLines();
+				sendTask(this.app, editor, view);
 			},
 		});
 

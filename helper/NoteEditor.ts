@@ -96,10 +96,6 @@ export class NoteEditor {
 		this.editor = editor;
 	}
 
-	get maxLineIndex(): number {
-		return this.lines.length - 1;
-	}
-
 	private cursorLineIndexes(): number[] {
 		return this.edges
 			.map((edge) => {
@@ -202,3 +198,13 @@ export class NoteEditor {
 		});
 	}
 }
+
+export const getLinesBlock = (lines: string[], start: number): string[] => {
+	for (let i = start; i < lines.length; i++) {
+		const line = lines[i];
+		if (line.trim().length < 1) {
+			return lines.slice(start, i);
+		}
+	}
+	return lines.slice(start);
+};
