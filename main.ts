@@ -139,8 +139,12 @@ const revealLine = (
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
-	private openNote(path: string) {
-		openNote(this.app, path, "nextTab");
+	private openNote(path: string, split: boolean = false) {
+		if (split) {
+			openNote(this.app, path, "split");
+		} else {
+			openNote(this.app, path, "nextTab");
+		}
 	}
 
 	private getActiveNote(): WeeklyNote | null {
@@ -298,6 +302,19 @@ export default class WeeklyNotePlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: "weeklynote-open-prev-note-to-right",
+			icon: "square-arrow-left",
+			name: COMMAND_OpenPrevNoteToRight,
+			callback: () => {
+				const note = this.getActiveNote();
+				if (note) {
+					const prev = note.decrement();
+					this.openNote(prev.path, true);
+				}
+			},
+		});
+
 		this.addRibbonIcon("square-arrow-left", COMMAND_OpenPrevNote, () => {
 			const note = this.getActiveNote();
 			if (note) {
@@ -315,6 +332,19 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (note) {
 					const next = note.increment();
 					this.openNote(next.path);
+				}
+			},
+		});
+
+		this.addCommand({
+			id: "weeklynote-open-next-note-to-right",
+			icon: "square-arrow-right",
+			name: COMMAND_OpenNextNoteToRight,
+			callback: () => {
+				const note = this.getActiveNote();
+				if (note) {
+					const next = note.increment();
+					this.openNote(next.path, true);
 				}
 			},
 		});
