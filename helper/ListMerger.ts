@@ -177,20 +177,19 @@ do nothing because all path of breadcrumb exist in original list.
 
 */
 
-interface MergedLine {
-	offset: number;
-	text: string;
+interface LineInsertion {
+	start: number;
+	content: string;
 }
 
-const mergedLine = (offset: number, text: string): MergedLine => {
-	return { offset: offset, text: text };
+const lineInsertion = (start: number, content: string): LineInsertion => {
+	return { start: start, content: content };
 };
 
-const findMergedLine = (
+const findLineInsertion = (
 	baseLines: string[],
 	breadcrumb: string[]
-): MergedLine | null => {
-	const bcString = breadcrumb.join("\n");
+): LineInsertion | null => {
 	if (breadcrumb.length < 1) {
 		return null;
 	}
@@ -198,6 +197,7 @@ const findMergedLine = (
 	const bcRoot = breadcrumb[0];
 	const bcPath = breadcrumb.slice(1);
 	const bcIndent = getIndent(bcRoot);
+	const bcString = breadcrumb.join("\n");
 
 	for (let i = 0; i < baseLines.length; i++) {
 		const line = baseLines[i];
@@ -205,17 +205,17 @@ const findMergedLine = (
 			if (bcPath.length < 1) {
 				return null;
 			}
-			const result = findMergedLine(baseLines.slice(i + 1), bcPath);
+			const result = findLineInsertion(baseLines.slice(i + 1), bcPath);
 			if (result) {
-				return mergedLine(i + 1 + result.offset, result.text);
+				return lineInsertion(i + 1 + result.start, result.content);
 			}
 			return null;
 		}
 		if (getIndent(line) < bcIndent) {
-			return mergedLine(i, bcString);
+			return lineInsertion(i, bcString);
 		}
 	}
-	return mergedLine(baseLines.length, bcString);
+	return lineInsertion(baseLines.length, bcString);
 };
 
 interface Task {
@@ -240,19 +240,20 @@ const appendToFile = async (
 		new Notice(`ERROR: Failed to append to "${path}" (file not found)`, 0);
 		return;
 	}
-	const lines = (await app.vault.read(file)).split("\n");
-	const found = lines.lastIndexOf(task.heading);
+	const existingLines = (await app.vault.read(file)).split("\n");
+	const found = existingLines.lastIndexOf(task.heading);
 	if (found != -1) {
-		const start = found + 1;
-		const baseListLines = getLinesBlock(lines, start);
-		const merged = findMergedLine(baseListLines, task.breadcrumb);
-		if (!merged) {
+		const baseListStart = found + 1;
+		const baseListLines = getLinesBlock(existingLines, baseListStart);
+		const insertion = findLineInsertion(baseListLines, task.breadcrumb);
+		if (!insertion) {
 			return;
 		}
 		const newLines = [
-			lines.slice(0, start + merged.offset),
-			merged.text,
-			baseListLines.slice(start + merged.offset),
+			existingLines.slice(0, baseListStart + insertion.start),
+			insertion.content,
+			task.content,
+			existingLines.slice(baseListStart + insertion.start),
 		].flat();
 		await app.vault.modify(file, newLines.join("\n") + "\n");
 	} else {
@@ -283,25 +284,32 @@ export const sendTask = (
 	const sent = new SentTask();
 	const breadcrumb = ed.breadcrumb();
 	if (0 < breadcrumb.length) {
-		sent.content = curLines.join("\n");
-		if (isMdList(breadcrumb[0])) {
-			sent.breadcrumb = breadcrumb;
+		const bcRoot = breadcrumb[0];
+		if (isMdList(bcRoot)) {
 			const lastPlain = ed.getLastLineIndex(nonListLine);
-			if (lastPlain) {
+			if (lastPlain === null) {
+				sent.heading = bcRoot;
+				sent.breadcrumb = breadcrumb.slice(1);
+			} else {
 				sent.heading = editor.getLine(lastPlain);
+				sent.breadcrumb = breadcrumb;
 			}
 		} else {
+			sent.heading = bcRoot;
 			sent.breadcrumb = breadcrumb.slice(1);
-			sent.heading = breadcrumb[0];
 		}
+		sent.content = curLines.join("\n");
 	} else {
 		const topLine = curLines[0];
 		if (isMdList(topLine)) {
 			const lastPlain = ed.getLastLineIndex(nonListLine);
-			if (lastPlain) {
+			if (lastPlain === null) {
+				sent.heading = topLine;
+				sent.content = curLines.slice(1).join("\n");
+			} else {
 				sent.heading = editor.getLine(lastPlain);
+				sent.content = curLines.join("\n");
 			}
-			sent.content = curLines.join("\n");
 		} else {
 			sent.heading = topLine;
 			sent.content = curLines.slice(1).join("\n");

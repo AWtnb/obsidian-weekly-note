@@ -83,6 +83,11 @@ export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
 	private openNote(path: string, split: boolean = false) {
+		const note = this.getActiveNote();
+		if (note && note.path == path) {
+			focusDailyLine(this.app);
+			return;
+		}
 		if (split) {
 			openNote(this.app, path, "split");
 		} else {
