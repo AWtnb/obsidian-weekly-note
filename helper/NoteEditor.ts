@@ -155,32 +155,36 @@ export class NoteEditor {
 	}
 
 	breadcrumb(): string[] {
+		const stack: string[] = [];
 		const depth = getIndent(this.lines[this.topEdge]);
-		return this.linesBeforeCursor()
-			.reverse()
-			.filter((line) => 0 < line.trim().length)
-			.filter((line) => {
-				// Filter to lines with shallower indentation than the topmost cursor.
-				return getIndent(line) < depth;
-			})
-			.reduce((acc: string[], s: string) => {
-				// Remove everything before the nearest line with indentation level 0.
-				const last = acc.at(-1);
-				if (!last || getIndent(last) != 0) {
-					acc.push(s);
-				}
-				return acc;
-			}, [])
-			.reduce((acc: string[], s: string) => {
-				// If there are multiple lines with the same indentation level, remove all lines except the topmost one.
-				const last = acc.at(-1);
-				if (last && getIndent(last) == getIndent(s)) {
-					acc.pop();
-				}
-				acc.push(s);
-				return acc;
-			}, [])
-			.reverse();
+		if (depth == 0) {
+			return stack;
+		}
+		const indentHistory = new Set<number>();
+
+		for (let i = this.topEdge - 1; 0 <= i; i--) {
+			const line = this.lines[i];
+			if (line.trim().length == 0) {
+				continue;
+			}
+
+			const indent = getIndent(line);
+			if (depth <= indent) {
+				continue;
+			}
+			if (indentHistory.has(indent)) {
+				continue;
+			}
+
+			stack.push(line);
+			indentHistory.add(indent);
+
+			if (indent == 0) {
+				break;
+			}
+		}
+
+		return stack.reverse();
 	}
 
 	private replaceCursorLines(replacer: LineReplacer): NewLine[] {
