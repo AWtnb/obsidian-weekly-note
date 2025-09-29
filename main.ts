@@ -22,7 +22,7 @@ import {
 	nonListLine,
 	unFinishedListRoot,
 } from "helper/NoteEditor";
-import { focusDailyLine, JumpModal, openNote } from "helper/NoteJumper";
+import { focusDailyLine, DateInputModal, openNote } from "helper/NoteSwitcher";
 import { findMergedLine } from "helper/ListMerger";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
@@ -257,12 +257,12 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "book-open",
 			name: COMMAND_OpenNoteByDate,
 			callback: () => {
-				new JumpModal(this.app, false).open();
+				new DateInputModal(this.app, false).open();
 			},
 		});
 
 		this.addRibbonIcon("book-open", COMMAND_OpenNoteByDate, () => {
-			new JumpModal(this.app, false).open();
+			new DateInputModal(this.app, false).open();
 		});
 
 		this.addCommand({
@@ -270,7 +270,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "book-open",
 			name: COMMAND_OpenNoteByDateToRight,
 			callback: () => {
-				new JumpModal(this.app, true).open();
+				new DateInputModal(this.app, true).open();
 			},
 		});
 

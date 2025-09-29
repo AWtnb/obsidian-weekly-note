@@ -1,4 +1,4 @@
-import { App, Modal, Notice, PaneType } from "obsidian";
+import { App, Modal, Notice } from "obsidian";
 import { toDateString, WeeklyNote } from "./Weeklynote";
 
 const splitAt = (s: string, i: number): [number, number] => {
@@ -153,7 +153,7 @@ export const openNote = (
 	return false;
 };
 
-export class JumpModal extends Modal {
+export class DateInputModal extends Modal {
 	private readonly openMode: OpenMode;
 	constructor(app: App, split: boolean) {
 		super(app);
