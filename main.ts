@@ -28,9 +28,12 @@ import { findMergedLine } from "helper/ListMerger";
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
 const COMMAND_OpenPrevNote = "前のノートを開く";
+const COMMAND_OpenPrevNoteToRight = "前のノートを右に開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
+const COMMAND_OpenNextNoteToRight = "次のノートを右に開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
-const COMMAND_JumpToNote = "ノートにジャンプ";
+const COMMAND_OpenNoteByDate = "日付指定でノートを開く";
+const COMMAND_OpenNoteByDateToRight = "日付指定でノートを右に開く";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
 const COMMAND_JumpToNextUnFinishedListRoot = "次の未完了リスト項目までジャンプ";
 const COMMAND_JumpToLastUnFinishedListRoot = "前の未完了リスト項目までジャンプ";
@@ -119,13 +122,17 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	],
 };
 
-const revealLine = (editor: Editor, lineIdx: number) => {
+const revealLine = (
+	editor: Editor,
+	lineIdx: number,
+	center: boolean = false
+) => {
 	editor.scrollIntoView(
 		{
 			from: { line: lineIdx, ch: 0 },
 			to: { line: lineIdx, ch: 0 },
 		},
-		true
+		center
 	);
 };
 
@@ -133,7 +140,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
 	private openNote(path: string) {
-		openNote(this.app, path, false);
+		openNote(this.app, path, "nextTab");
 	}
 
 	private getActiveNote(): WeeklyNote | null {
@@ -172,7 +179,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			name: COMMAND_ScrollToCursor,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const selTop = editor.getCursor("from").line;
-				revealLine(editor, selTop);
+				revealLine(editor, selTop, true);
 			},
 		});
 
@@ -242,16 +249,25 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-to-note",
+			id: "weeklynote-open-note-by-date",
 			icon: "book-open",
-			name: COMMAND_JumpToNote,
+			name: COMMAND_OpenNoteByDate,
 			callback: () => {
-				new JumpModal(this.app).open();
+				new JumpModal(this.app, false).open();
 			},
 		});
 
-		this.addRibbonIcon("book-open", COMMAND_JumpToNote, () => {
-			new JumpModal(this.app).open();
+		this.addRibbonIcon("book-open", COMMAND_OpenNoteByDate, () => {
+			new JumpModal(this.app, false).open();
+		});
+
+		this.addCommand({
+			id: "weeklynote-open-note-by-date-to-right",
+			icon: "book-open",
+			name: COMMAND_OpenNoteByDateToRight,
+			callback: () => {
+				new JumpModal(this.app, true).open();
+			},
 		});
 
 		this.addCommand({

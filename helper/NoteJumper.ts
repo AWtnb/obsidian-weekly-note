@@ -131,12 +131,15 @@ interface FileOpenedCallback {
 	(): void;
 }
 
+type OpenMode = "currentTab" | "nextTab" | "split";
+
 export const openNote = (
 	app: App,
 	path: string,
-	position: boolean | PaneType = true,
+	mode: OpenMode,
 	onOpen: FileOpenedCallback | null = null
 ): boolean => {
+	const position = mode == "split" ? mode : mode == "currentTab";
 	if (app.vault.getFileByPath(path)) {
 		app.workspace.openLinkText("", path, position).then(() => {
 			if (onOpen) {
@@ -151,20 +154,22 @@ export const openNote = (
 };
 
 export class JumpModal extends Modal {
-	constructor(app: App) {
+	private readonly openMode: OpenMode;
+	constructor(app: App, split: boolean) {
 		super(app);
+		if (!this.app.workspace.getActiveFile()) {
+			this.openMode = "currentTab";
+		} else {
+			if (split) {
+				this.openMode = "split";
+			} else {
+				this.openMode = "nextTab";
+			}
+		}
 	}
 
-	private jumpTo(
-		path: string,
-		date: string,
-		contextEvent: KeyboardEvent | MouseEvent
-	): void {
-		const pos = (() => {
-			if (!this.app.workspace.getActiveFile()) return false;
-			return contextEvent.ctrlKey ? "split" : true;
-		})();
-		const result = openNote(this.app, path, pos, () => {
+	private jumpTo(path: string, date: string): void {
+		const result = openNote(this.app, path, this.openMode, () => {
 			const d = new Date(date);
 			focusDailyLine(this.app, d);
 		});
@@ -177,7 +182,11 @@ export class JumpModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.id = "jump-modal";
-		contentEl.createDiv().setText("Jump to:");
+		if (this.openMode == "split") {
+			contentEl.createDiv().setText("Open to right:");
+		} else {
+			contentEl.createDiv().setText("Open:");
+		}
 		const input = contentEl.createEl("input", { type: "tel" });
 		input.focus();
 
@@ -198,13 +207,13 @@ export class JumpModal extends Modal {
 		const createButtonElem = (button: Button) => {
 			const b = box.createEl("button");
 			b.setText(button.label);
-			b.onclick = (ev) => {
-				this.jumpTo(button.href, button.label, ev);
+			b.onclick = () => {
+				this.jumpTo(button.href, button.label);
 			};
 			b.onkeydown = (ev) => {
 				if (ev.key != "Enter") return;
 				ev.preventDefault();
-				this.jumpTo(button.href, button.label, ev);
+				this.jumpTo(button.href, button.label);
 			};
 		};
 
