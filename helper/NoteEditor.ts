@@ -159,8 +159,12 @@ export class NoteEditor {
 		return this.linesBeforeCursor()
 			.reverse()
 			.filter((line) => 0 < line.trim().length)
-			.filter((line) => getIndent(line) < depth)
+			.filter((line) => {
+				// Filter to lines with shallower indentation than the topmost cursor.
+				return getIndent(line) < depth;
+			})
 			.reduce((acc: string[], s: string) => {
+				// Remove everything before the nearest line with indentation level 0.
 				const last = acc.at(-1);
 				if (!last || getIndent(last) != 0) {
 					acc.push(s);
@@ -168,6 +172,7 @@ export class NoteEditor {
 				return acc;
 			}, [])
 			.reduce((acc: string[], s: string) => {
+				// If there are multiple lines with the same indentation level, remove all lines except the topmost one.
 				const last = acc.at(-1);
 				if (last && getIndent(last) == getIndent(s)) {
 					acc.pop();
