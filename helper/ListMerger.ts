@@ -188,46 +188,46 @@ const lineInsertion = (start: number, content: string): LineInsertion => {
 
 const findLineInsertion = (
 	baseLines: string[],
-	breadcrumb: string[]
+	tree: string[]
 ): LineInsertion | null => {
-	if (breadcrumb.length < 1) {
+	if (tree.length < 1) {
 		return null;
 	}
 
-	const bcRoot = breadcrumb[0];
-	const bcPath = breadcrumb.slice(1);
-	const bcIndent = getIndent(bcRoot);
-	const bcString = breadcrumb.join("\n");
+	const trRoot = tree[0];
+	const trPath = tree.slice(1);
+	const trIndent = getIndent(trRoot);
+	const trString = tree.join("\n");
 
 	for (let i = 0; i < baseLines.length; i++) {
 		const line = baseLines[i];
-		if (line == bcRoot) {
-			if (bcPath.length < 1) {
+		if (line == trRoot) {
+			if (trPath.length < 1) {
 				return null;
 			}
-			const result = findLineInsertion(baseLines.slice(i + 1), bcPath);
+			const result = findLineInsertion(baseLines.slice(i + 1), trPath);
 			if (result) {
 				return lineInsertion(i + 1 + result.start, result.content);
 			}
 			return null;
 		}
-		if (getIndent(line) < bcIndent) {
-			return lineInsertion(i, bcString);
+		if (getIndent(line) < trIndent) {
+			return lineInsertion(i, trString);
 		}
 	}
-	return lineInsertion(baseLines.length, bcString);
+	return lineInsertion(baseLines.length, trString);
 };
 
 interface Task {
 	heading: string;
 	breadcrumb: string[];
-	content: string;
+	lines: string[];
 }
 
 export class SentTask implements Task {
 	heading: string = "";
 	breadcrumb: string[] = [];
-	content: string = "";
+	lines: string[] = [];
 }
 
 const appendToFile = async (
@@ -243,21 +243,21 @@ const appendToFile = async (
 	const existingLines = (await app.vault.read(file)).split("\n");
 	const found = existingLines.lastIndexOf(task.heading);
 	if (found != -1) {
+		const tree = task.breadcrumb.concat(task.lines);
 		const baseListStart = found + 1;
 		const baseListLines = getLinesBlock(existingLines, baseListStart);
-		const insertion = findLineInsertion(baseListLines, task.breadcrumb);
+		const insertion = findLineInsertion(baseListLines, tree);
 		if (!insertion) {
 			return;
 		}
 		const newLines = [
 			existingLines.slice(0, baseListStart + insertion.start),
 			insertion.content,
-			task.content,
 			existingLines.slice(baseListStart + insertion.start),
 		].flat();
 		await app.vault.modify(file, newLines.join("\n") + "\n");
 	} else {
-		const newLines = [task.heading, task.breadcrumb, task.content]
+		const newLines = [task.heading, task.breadcrumb, task.lines]
 			.flat()
 			.filter((line) => 0 < line.trim().length);
 		await app.vault.append(file, "\n\n" + newLines.join("\n") + "\n");
@@ -276,8 +276,9 @@ export const sendTask = (
 	if (!note) return;
 
 	const ed = new NoteEditor(editor);
-	const curLines = ed.cursorLines().filter((line) => 0 < line.trim().length);
-	if (curLines.length < 1) {
+	const targetIdxs = ed.sentLineIndexes();
+	const sentLines = ed.byIndex(targetIdxs);
+	if (sentLines.length < 1) {
 		return;
 	}
 
@@ -298,26 +299,26 @@ export const sendTask = (
 			sent.heading = bcRoot;
 			sent.breadcrumb = breadcrumb.slice(1);
 		}
-		sent.content = curLines.join("\n");
+		sent.lines = sentLines;
 	} else {
-		const topLine = curLines[0];
+		const topLine = sentLines[0];
 		if (isMdList(topLine)) {
 			const lastPlain = ed.getLastLineIndex(nonListLine);
 			if (lastPlain === null) {
 				sent.heading = topLine;
-				sent.content = curLines.slice(1).join("\n");
+				sent.lines = sentLines.slice(1);
 			} else {
 				sent.heading = editor.getLine(lastPlain);
-				sent.content = curLines.join("\n");
+				sent.lines = sentLines;
 			}
 		} else {
 			sent.heading = topLine;
-			sent.content = curLines.slice(1).join("\n");
+			sent.lines = sentLines.slice(1);
 		}
 	}
 
 	const nextPath = note.increment().path;
 	appendToFile(app, nextPath, sent);
 
-	ed.strikeThroughCursorLines();
+	ed.strikeThroughSentLines(targetIdxs);
 };

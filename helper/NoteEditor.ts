@@ -109,11 +109,45 @@ export class NoteEditor {
 				return toSeq(edge.top, edge.bottom);
 			})
 			.flat()
+			.reduce((acc: number[], n: number) => {
+				if (acc.indexOf(n) == -1) {
+					acc.push(n);
+				}
+				return acc;
+			}, [])
 			.sort((a, b) => a - b);
 	}
 
-	cursorLines(): string[] {
-		return this.cursorLineIndexes().map((i) => {
+	sentLineIndexes(): number[] {
+		const idxs = new Set<number>();
+		const curLineIdxs = this.cursorLineIndexes();
+		for (const idx of curLineIdxs) {
+			const curLine = this.lines[idx];
+			if (!curLine || curLine.trim().length === 0) continue;
+			idxs.add(idx);
+			const baseIndent = getIndent(curLine);
+			let i = idx + 1;
+			if (curLineIdxs.indexOf(i) !== -1) {
+				continue;
+			}
+			while (i <= this.maxLineIndex) {
+				const line = this.lines[i];
+				if (!line || line.trim().length === 0) break;
+				if (line.endsWith("~~")) {
+					i++;
+					continue;
+				}
+				if (getIndent(line) <= baseIndent) break;
+				idxs.add(i);
+				i++;
+			}
+		}
+
+		return Array.from(idxs).sort((a, b) => a - b);
+	}
+
+	byIndex(indexes: number[]): string[] {
+		return indexes.map((i) => {
 			return this.lines[i];
 		});
 	}
@@ -187,8 +221,8 @@ export class NoteEditor {
 		return stack.reverse();
 	}
 
-	private replaceCursorLines(replacer: LineReplacer): NewLine[] {
-		return this.cursorLineIndexes().map((i) => {
+	private replaceLines(indexes: number[], replacer: LineReplacer): NewLine[] {
+		return indexes.map((i) => {
 			return {
 				index: i,
 				text: replacer(this.lines[i]),
@@ -196,8 +230,8 @@ export class NoteEditor {
 		});
 	}
 
-	strikeThroughCursorLines() {
-		this.replaceCursorLines(strikeThrough).forEach((newLine) => {
+	strikeThroughSentLines(indexes: number[]) {
+		this.replaceLines(indexes, strikeThrough).forEach((newLine) => {
 			this.editor.setLine(newLine.index, newLine.text);
 		});
 	}
