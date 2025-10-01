@@ -29,7 +29,7 @@ class MdListLine {
 		return 0 < this.symbol.length;
 	}
 	isUnFinished(): boolean {
-		return this.isList() && this.text.startsWith("[ ]");
+		return this.isList() && !this.text.startsWith("[x]");
 	}
 	private get strike(): string {
 		return "~~";
@@ -81,7 +81,7 @@ interface LineChecker {
 	(line: string): boolean;
 }
 
-export const unFinishedListRoot: LineChecker = (line: string): boolean => {
+export const unFinishedListLine: LineChecker = (line: string): boolean => {
 	const l = line.trim();
 	if (0 < l.length) {
 		const ml = asMdListLine(l);

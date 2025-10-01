@@ -16,7 +16,7 @@ import {
 	fromPath,
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
-import { NoteEditor, nonListLine, unFinishedListRoot } from "helper/NoteEditor";
+import { NoteEditor, nonListLine, unFinishedListLine } from "helper/NoteEditor";
 import { focusDailyLine, DateInputModal, openNote } from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
 
@@ -30,8 +30,8 @@ const COMMAND_SendToNextNote = "次のノートに送る";
 const COMMAND_OpenNoteByDate = "日付指定でノートを開く";
 const COMMAND_OpenNoteByDateToRight = "日付指定でノートを右に開く";
 const COMMAND_ScrollToCursor = "カーソルまでスクロール";
-const COMMAND_JumpToNextUnFinishedListRoot = "次の未完了リスト項目までジャンプ";
-const COMMAND_JumpToLastUnFinishedListRoot = "前の未完了リスト項目までジャンプ";
+const COMMAND_JumpToNextUnFinishedListLine = "次の未完了リスト行までジャンプ";
+const COMMAND_JumpToLastUnFinishedListLine = "前の未完了リスト行までジャンプ";
 const COMMAND_JumpToNextNonListLine = "次の非リスト行までジャンプ";
 const COMMAND_JumpToLastNonListLine = "前の非リスト行までジャンプ";
 
@@ -136,12 +136,12 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-to-next-unfinished-list-root",
+			id: "weeklynote-jump-to-next-unfinished-list-line",
 			icon: "circle-chevron-down",
-			name: COMMAND_JumpToNextUnFinishedListRoot,
+			name: COMMAND_JumpToNextUnFinishedListLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const nextListRoot = ed.getNextLineIndex(unFinishedListRoot);
+				const nextListRoot = ed.getNextLineIndex(unFinishedListLine);
 				const to = nextListRoot || ed.maxLineIndex;
 				editor.setCursor(to);
 				revealLine(editor, to);
@@ -149,12 +149,12 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-jump-to-last-unfinished-list-root",
+			id: "weeklynote-jump-to-last-unfinished-list-line",
 			icon: "circle-chevron-up",
-			name: COMMAND_JumpToLastUnFinishedListRoot,
+			name: COMMAND_JumpToLastUnFinishedListLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const ed = new NoteEditor(editor);
-				const lastListRoot = ed.getLastLineIndex(unFinishedListRoot);
+				const lastListRoot = ed.getLastLineIndex(unFinishedListLine);
 				const to = lastListRoot || 0;
 				editor.setCursor(to);
 				revealLine(editor, to);
