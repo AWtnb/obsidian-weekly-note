@@ -16,12 +16,17 @@ function Copy-PluginFiles {
 
 try {
     Get-Command npm -ErrorAction stop > $null
-    npm install
-    if ($LASTEXITCODE -eq 0) {
-        npm run build
+    if (Test-Path -Path ($PSScriptRoot | Join-Path -ChildPath "node_modules")) {
+        npm install
         if ($LASTEXITCODE -eq 0) {
-            Copy-PluginFiles -vaultDir $args[0]
+            npm run build
+            if ($LASTEXITCODE -eq 0) {
+                Copy-PluginFiles -vaultDir $args[0]
+            }
         }
+    }
+    else {
+        "node packages not installed. Run ``npm install`` first." | Write-Host
     }
 }
 catch {
