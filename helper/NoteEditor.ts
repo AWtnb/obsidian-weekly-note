@@ -12,38 +12,53 @@ const toSeq = (start: number, end: number): number[] => {
 	return arr;
 };
 
-interface MdList {
-	symbol: string;
-	text: string;
-	finished: boolean;
+class MdListLine {
+	private readonly symbol: string;
+	private readonly text: string;
+	constructor(s: string) {
+		const head = s.substring(0, 2);
+		if ("-+*".indexOf(head.trim()) != -1) {
+			this.symbol = head;
+			this.text = s.substring(2);
+		} else {
+			this.symbol = "";
+			this.text = s;
+		}
+	}
+	isList(): boolean {
+		return 0 < this.symbol.length;
+	}
+	isUnFinished(): boolean {
+		return this.isList() && this.text.startsWith("[ ]");
+	}
+	private get strike(): string {
+		return "~~";
+	}
+	isDeleted(): boolean {
+		return (
+			this.text.startsWith(this.strike) && this.text.endsWith(this.strike)
+		);
+	}
+	getDeletedLine(): string {
+		if (this.isDeleted()) {
+			return this.symbol + this.text;
+		}
+		return this.symbol + this.strike + this.text + this.strike;
+	}
 }
 
-const checkFilledMdTask = (s: string): boolean => {
-	return s.substring(0, 3) === "[x]";
-};
-
-export const asMdList = (line: string): MdList => {
-	const head = line.substring(0, 2);
-	if (["- ", "+ ", "* "].includes(head)) {
-		const t = line.substring(2);
-		return { symbol: head, text: t, finished: checkFilledMdTask(t) };
-	}
-	return { symbol: "", text: line, finished: checkFilledMdTask(line) };
-};
-
-export const isMdList = (line: string): boolean => {
-	return 0 < asMdList(line.trim()).symbol.length;
+export const asMdListLine = (line: string): MdListLine => {
+	return new MdListLine(line);
 };
 
 const strikeThrough = (s: string): string => {
-	const strike = "~~";
 	const reg = new RegExp("(^\\s*)(.+)", "g");
 	return s.replace(
 		reg,
-		(_: string, indent: string, content: string): string => {
+		(raw: string, indent: string, content: string): string => {
 			const line = content.trimEnd();
-			const mdLine = asMdList(line);
-			return indent + mdLine.symbol + strike + mdLine.text + strike;
+			const ml = asMdListLine(line);
+			return indent + ml.getDeletedLine();
 		}
 	);
 };
@@ -69,15 +84,15 @@ interface LineChecker {
 export const unFinishedListRoot: LineChecker = (line: string): boolean => {
 	const l = line.trim();
 	if (0 < l.length) {
-		const ml = asMdList(l);
-		return 0 < ml.symbol.length && !ml.finished;
+		const ml = asMdListLine(l);
+		return ml.isUnFinished();
 	}
 	return false;
 };
 
 export const nonListLine: LineChecker = (line: string): boolean => {
 	const l = line.trim();
-	return 0 < l.length && asMdList(l).symbol.length < 1;
+	return !asMdListLine(l).isList();
 };
 
 const toEdge = (sel: EditorSelection): CursorEdge => {
@@ -123,7 +138,9 @@ export class NoteEditor {
 		const curLineIdxs = this.cursorLineIndexes();
 		for (const idx of curLineIdxs) {
 			const curLine = this.lines[idx];
-			if (!curLine || curLine.trim().length === 0) continue;
+			if (!curLine || curLine.trim().length < 1) continue;
+			const ml = asMdListLine(curLine);
+			if (ml.isDeleted()) continue;
 			idxs.add(idx);
 			const baseIndent = getIndent(curLine);
 			let i = idx + 1;
@@ -132,12 +149,18 @@ export class NoteEditor {
 			}
 			while (i <= this.maxLineIndex) {
 				const line = this.lines[i];
-				if (!line || line.trim().length === 0) break;
-				if (line.endsWith("~~")) {
+				if (!line || line.trim().length < 1) break;
+				if (asMdListLine(line).isDeleted()) {
 					i++;
 					continue;
 				}
-				if (getIndent(line) <= baseIndent) break;
+				const indent = getIndent(line);
+				if (indent <= baseIndent) {
+					if (indent == baseIndent && !ml.isList()) {
+						idxs.add(i);
+					}
+					break;
+				}
 				idxs.add(i);
 				i++;
 			}

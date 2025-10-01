@@ -1,8 +1,8 @@
 import { App, Notice, TFile, Editor, MarkdownView } from "obsidian";
 import {
+	asMdListLine,
 	getIndent,
 	getLinesBlock,
-	isMdList,
 	nonListLine,
 	NoteEditor,
 } from "./NoteEditor";
@@ -218,22 +218,26 @@ const findLineInsertion = (
 	return lineInsertion(baseLines.length, trString);
 };
 
-interface Task {
-	heading: string;
-	breadcrumb: string[];
-	lines: string[];
-}
-
-export class SentTask implements Task {
+class Context {
 	heading: string = "";
 	breadcrumb: string[] = [];
+}
+
+class Task {
+	context: Context;
 	lines: string[] = [];
+	constructor() {
+		this.context = new Context();
+	}
+	get tree(): string[] {
+		return this.context.breadcrumb.concat(this.lines);
+	}
 }
 
 const appendToFile = async (
 	app: App,
 	path: string,
-	task: SentTask
+	task: Task
 ): Promise<void> => {
 	const file = app.vault.getFileByPath(path);
 	if (!(file instanceof TFile)) {
@@ -241,12 +245,11 @@ const appendToFile = async (
 		return;
 	}
 	const existingLines = (await app.vault.read(file)).split("\n");
-	const found = existingLines.lastIndexOf(task.heading);
+	const found = existingLines.lastIndexOf(task.context.heading);
 	if (found != -1) {
-		const tree = task.breadcrumb.concat(task.lines);
 		const baseListStart = found + 1;
 		const baseListLines = getLinesBlock(existingLines, baseListStart);
-		const insertion = findLineInsertion(baseListLines, tree);
+		const insertion = findLineInsertion(baseListLines, task.tree);
 		if (!insertion) {
 			return;
 		}
@@ -257,7 +260,7 @@ const appendToFile = async (
 		].flat();
 		await app.vault.modify(file, newLines.join("\n") + "\n");
 	} else {
-		const newLines = [task.heading, task.breadcrumb, task.lines]
+		const newLines = [task.context.heading, task.tree]
 			.flat()
 			.filter((line) => 0 < line.trim().length);
 		await app.vault.append(file, "\n\n" + newLines.join("\n") + "\n");
@@ -282,37 +285,37 @@ export const sendTask = (
 		return;
 	}
 
-	const sent = new SentTask();
+	const sent = new Task();
 	const breadcrumb = ed.breadcrumb();
 	if (0 < breadcrumb.length) {
 		const bcRoot = breadcrumb[0];
-		if (isMdList(bcRoot)) {
+		if (asMdListLine(bcRoot).isList()) {
 			const lastPlain = ed.getLastLineIndex(nonListLine);
 			if (lastPlain === null) {
-				sent.heading = bcRoot;
-				sent.breadcrumb = breadcrumb.slice(1);
+				sent.context.heading = bcRoot;
+				sent.context.breadcrumb = breadcrumb.slice(1);
 			} else {
-				sent.heading = editor.getLine(lastPlain);
-				sent.breadcrumb = breadcrumb;
+				sent.context.heading = editor.getLine(lastPlain);
+				sent.context.breadcrumb = breadcrumb;
 			}
 		} else {
-			sent.heading = bcRoot;
-			sent.breadcrumb = breadcrumb.slice(1);
+			sent.context.heading = bcRoot;
+			sent.context.breadcrumb = breadcrumb.slice(1);
 		}
 		sent.lines = sentLines;
 	} else {
 		const topLine = sentLines[0];
-		if (isMdList(topLine)) {
+		if (asMdListLine(topLine).isList()) {
 			const lastPlain = ed.getLastLineIndex(nonListLine);
 			if (lastPlain === null) {
-				sent.heading = topLine;
+				sent.context.heading = topLine;
 				sent.lines = sentLines.slice(1);
 			} else {
-				sent.heading = editor.getLine(lastPlain);
+				sent.context.heading = editor.getLine(lastPlain);
 				sent.lines = sentLines;
 			}
 		} else {
-			sent.heading = topLine;
+			sent.context.heading = topLine;
 			sent.lines = sentLines.slice(1);
 		}
 	}
