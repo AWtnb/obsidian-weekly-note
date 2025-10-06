@@ -100,11 +100,12 @@ const asYMDs = (s: string): YMD[] => {
 	return [asYMD(yyyy, mm, dd)];
 };
 
-const getNotePath = (d: Date): string => {
+const getNotePath = (parent: string, d: Date): string => {
 	const monday = new Date(d);
 	const offset = (d.getDay() + 6) % 7;
 	monday.setDate(d.getDate() - offset);
 	const note = new WeeklyNote(monday);
+	note.setParent(parent);
 	return note.path;
 };
 
@@ -168,6 +169,12 @@ export class DateInputModal extends Modal {
 		}
 	}
 
+	private getActiveNoteParent(): string {
+		const f = this.app.workspace.getActiveFile();
+		if (!f) return "";
+		return f.path.split("/").slice(0, -2).join("/");
+	}
+
 	private jumpTo(path: string, date: string): void {
 		const result = openNote(this.app, path, this.openMode, () => {
 			const d = new Date(date);
@@ -217,6 +224,7 @@ export class DateInputModal extends Modal {
 			};
 		};
 
+		const parentPath = this.getActiveNoteParent();
 		input.oninput = () => {
 			clearBox();
 			asYMDs(input.value)
@@ -228,7 +236,7 @@ export class DateInputModal extends Modal {
 					const d = new Date(label);
 					return {
 						label: label,
-						href: getNotePath(d),
+						href: getNotePath(parentPath, d),
 					};
 				})
 				.forEach((b) => {

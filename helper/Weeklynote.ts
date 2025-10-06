@@ -17,6 +17,7 @@ interface StartOfWeek {
 export class WeeklyNote {
 	readonly name: string;
 	readonly start: StartOfWeek;
+	private parentPath: string = "";
 	constructor(monday: Date) {
 		const sunday = new Date(monday);
 		sunday.setDate(monday.getDate() + 6);
@@ -27,8 +28,15 @@ export class WeeklyNote {
 			Day: monday.getDate(),
 		};
 	}
+	setParent(name: string) {
+		this.parentPath = name;
+	}
 	get path(): string {
-		return `${this.start.Year}/${this.name}`;
+		let p = this.parentPath;
+		if (0 < p.length) {
+			p += "/";
+		}
+		return `${p}${this.start.Year}/${this.name}`;
 	}
 	private getMonday(delta: number): WeeklyNote {
 		const monday = new Date(
@@ -36,7 +44,9 @@ export class WeeklyNote {
 			this.start.Month - 1,
 			this.start.Day + 7 * delta
 		);
-		return new WeeklyNote(monday);
+		const note = new WeeklyNote(monday);
+		note.setParent(this.parentPath);
+		return note;
 	}
 	increment(): WeeklyNote {
 		return this.getMonday(1);
@@ -69,6 +79,7 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	const dd = name.substring(2, 4);
 	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
 	const note = new WeeklyNote(monday);
+	note.setParent(pathElems.slice(0, -2).join("/"));
 	return note;
 };
 
@@ -237,7 +248,6 @@ export class WeeklyNoteModal extends Modal {
 			if (this.app.vault.getFileByPath(notePath)) {
 				new Notice(`${notePath} already exists.`);
 			} else {
-				const t = this.template || "";
 				await this.app.vault.create(
 					notePath,
 					this.getContent(
