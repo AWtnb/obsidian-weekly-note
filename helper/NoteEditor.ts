@@ -92,7 +92,7 @@ export const unFinishedListLine: LineChecker = (line: string): boolean => {
 
 export const nonListLine: LineChecker = (line: string): boolean => {
 	const l = line.trim();
-	return !asMdListLine(l).isList();
+	return 0 < l.length && !asMdListLine(l).isList();
 };
 
 const toEdge = (sel: EditorSelection): CursorEdge => {
