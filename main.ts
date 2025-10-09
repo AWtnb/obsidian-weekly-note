@@ -19,6 +19,7 @@ import {
 import { NoteEditor, nonListLine, unFinishedListLine } from "helper/NoteEditor";
 import { focusDailyLine, DateInputModal, openNote } from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
+import { FutureNoteModal } from "helper/FutureNotes";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -34,6 +35,7 @@ const COMMAND_JumpToNextUnFinishedListLine = "次の未完了リスト行まで�
 const COMMAND_JumpToLastUnFinishedListLine = "前の未完了リスト行までジャンプ";
 const COMMAND_JumpToNextNonListLine = "次の非リスト行までジャンプ";
 const COMMAND_JumpToLastNonListLine = "前の非リスト行までジャンプ";
+const COMMAND_SearchFutureNote = "未来のノートから検索";
 
 interface WeeklyNoteSettings {
 	template: string;
@@ -235,6 +237,19 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
 			const note = fromWeek();
 			this.openNote(note.path);
+		});
+
+		this.addCommand({
+			id: "weeklynote-search-future-note",
+			icon: "file-search",
+			name: COMMAND_SearchFutureNote,
+			callback: () => {
+				new FutureNoteModal(this.app).open();
+			},
+		});
+
+		this.addRibbonIcon("file-search", COMMAND_SearchFutureNote, () => {
+			new FutureNoteModal(this.app).open();
 		});
 
 		this.addCommand({
