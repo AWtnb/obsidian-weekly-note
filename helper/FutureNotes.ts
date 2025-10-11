@@ -1,5 +1,5 @@
 import { App, Modal, TFile } from "obsidian";
-import { openNote } from "./NoteSwitcher";
+import { openNote, searchAndFocusLine } from "./NoteSwitcher";
 
 export class FutureNoteModal extends Modal {
 	constructor(app: App) {
@@ -30,9 +30,9 @@ export class FutureNoteModal extends Modal {
 			});
 	}
 
-	private openNote(path: string) {
+	private openNote(path: string, search: string) {
 		openNote(this.app, path, "split", () => {
-			// できれば対象の行にフォーカスしたい
+			searchAndFocusLine(this.app, search);
 		});
 		this.close();
 	}
@@ -59,7 +59,7 @@ export class FutureNoteModal extends Modal {
 			const b = result.createEl("button");
 			b.setText(file.name);
 			b.onclick = () => {
-				this.openNote(file.path);
+				this.openNote(file.path, found);
 			};
 			const detail = result.createDiv();
 			detail.addClass("matches");

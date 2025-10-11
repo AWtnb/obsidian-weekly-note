@@ -109,16 +109,15 @@ const getNotePath = (parent: string, d: Date): string => {
 	return note.path;
 };
 
-export const focusDailyLine = (app: App, date: Date | null = null) => {
+export const searchAndFocusLine = (app: App, search: string) => {
 	const md = app.workspace.activeEditor;
 	if (!md || !md.editor) return;
 	const editor = md.editor;
-	const today = toDateString(date || new Date());
 	const found = editor
 		.getValue()
 		.split("\n")
 		.map((line, i) => {
-			if (line.indexOf(today) != -1) return i;
+			if (line.indexOf(search) != -1) return i;
 			return -1;
 		})
 		.filter((i) => -1 < i);
@@ -126,6 +125,11 @@ export const focusDailyLine = (app: App, date: Date | null = null) => {
 		const n = found[0];
 		editor.setCursor(n);
 	}
+};
+
+export const focusDailyLine = (app: App, date: Date | null = null) => {
+	const today = toDateString(date || new Date());
+	searchAndFocusLine(app, today);
 };
 
 interface FileOpenedCallback {
