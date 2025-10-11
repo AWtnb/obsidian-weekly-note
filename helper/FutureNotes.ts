@@ -31,7 +31,7 @@ export class FutureNoteModal extends Modal {
 	}
 
 	private openNote(path: string) {
-		openNote(this.app, path, "nextTab", () => {
+		openNote(this.app, path, "split", () => {
 			// できれば対象の行にフォーカスしたい
 		});
 		this.close();
@@ -40,6 +40,7 @@ export class FutureNoteModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.id = "future-modal";
+		contentEl.createEl("h1").setText("Search:");
 		const searchBox = contentEl.createEl("input");
 		searchBox.focus();
 

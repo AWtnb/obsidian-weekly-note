@@ -18,13 +18,16 @@
 }
 
 #future-modal .result {
-	margin-bottom: 1em;
+	margin: 1em 0;
 	border-left: 2px solid var(--text-accent);
-	padding-left: 1em;
+}
+
+#future-modal .result button {
+	margin-left: 0.5em;
 }
 
 #future-modal .matches {
-	padding: 0.5em 0;
+	margin: 1em;
 }
 
 #future-modal .matches mark {
