@@ -53,24 +53,22 @@ export class FutureNoteModal extends Modal {
 		};
 
 		const makeResult = (file: TFile, content: string, found: string) => {
-			const container = results.createDiv();
-			container.addClass("result-container");
-			const b = container.createEl("button");
+			const result = results.createDiv();
+			result.addClass("result");
+			const b = result.createEl("button");
 			b.setText(file.name);
 			b.onclick = () => {
 				this.openNote(file.path);
 			};
-			const detail = container.createDiv();
-			detail.addClass("detail");
+			const detail = result.createDiv();
+			detail.addClass("matches");
 			content.split("\n").forEach((line) => {
 				const i = line.indexOf(found);
 				if (i == -1) return;
-				const detailLine = detail.createDiv();
-				detailLine.createSpan().setText(line.substring(0, i));
-				detailLine.createEl("mark").setText(found);
-				detailLine
-					.createSpan()
-					.setText(line.substring(i + found.length));
+				const matchLine = detail.createDiv();
+				matchLine.appendText(line.substring(0, i));
+				matchLine.createEl("mark").setText(found);
+				matchLine.appendText(line.substring(i + found.length));
 			});
 		};
 

@@ -17,6 +17,20 @@
 	min-width: 5rem;
 }
 
+#future-modal .result {
+	margin-bottom: 1em;
+	border-left: 2px solid var(--text-accent);
+	padding-left: 1em;
+}
+
+#future-modal .matches {
+	padding: 0.5em 0;
+}
+
+#future-modal .matches mark {
+	background: var(--color-accent);
+}
+
 .weeklynote-setting-box {
 	width: 100%;
 }
