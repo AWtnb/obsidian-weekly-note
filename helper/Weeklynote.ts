@@ -32,11 +32,11 @@ export class WeeklyNote {
 		this.parentPath = name;
 	}
 	get path(): string {
-		let p = this.parentPath;
-		if (0 < p.length) {
-			p += "/";
+		const p = `${this.parentPath}/${this.start.Year}/${this.name}`;
+		if (p.startsWith("/")) {
+			return p.substring(1);
 		}
-		return `${p}${this.start.Year}/${this.name}`;
+		return p;
 	}
 	private getMonday(delta: number): WeeklyNote {
 		const monday = new Date(
@@ -53,6 +53,22 @@ export class WeeklyNote {
 	}
 	decrement(): WeeklyNote {
 		return this.getMonday(-1);
+	}
+	get weekIndex(): number {
+		const startDate = new Date(this.start.Year, 0, 1);
+		const startDayOfWeek = startDate.getDay();
+		const firstMonday = new Date(startDate);
+		firstMonday.setDate(startDate.getDate() + ((8 - startDayOfWeek) % 7));
+
+		const monday = new Date(
+			this.start.Year,
+			this.start.Month - 1,
+			this.start.Day
+		);
+		const daysCount = Math.floor(
+			(monday.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24)
+		);
+		return Math.floor(daysCount / 7) + 1;
 	}
 }
 
@@ -83,14 +99,14 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	return note;
 };
 
-const fromYear = (yyyy: number): WeeklyNote[] => {
-	const startDate = new Date(`${yyyy}-01-01`);
+const fromYear = (year: number): WeeklyNote[] => {
+	const startDate = new Date(year, 0, 1);
 	const startDayOfWeek = startDate.getDay();
 	const firstMonday = new Date(startDate);
 	firstMonday.setDate(startDate.getDate() + ((8 - startDayOfWeek) % 7));
 	const notes: WeeklyNote[] = [];
 	let monday = firstMonday;
-	while (monday.getFullYear() === yyyy) {
+	while (monday.getFullYear() === year) {
 		const note = new WeeklyNote(monday);
 		notes.push(note);
 		monday.setDate(monday.getDate() + 7);
@@ -164,7 +180,7 @@ export class WeeklyNoteModal extends Modal {
 		this.holidays = holidays.map((s): Holiday => {
 			const i = s.indexOf(" ");
 			if (i != -1) {
-				return new Holiday(s.substring(0, i), s.substring(i));
+				return new Holiday(s.substring(0, i), s.substring(i + 1));
 			}
 			return new Holiday(s, "");
 		});

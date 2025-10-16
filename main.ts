@@ -7,6 +7,7 @@ import {
 	PluginSettingTab,
 	Setting,
 	TFile,
+	WorkspaceLeaf,
 } from "obsidian";
 
 import {
@@ -116,6 +117,27 @@ export default class WeeklyNotePlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+
+		const statusbar = this.addStatusBarItem();
+		const weekCounter = statusbar.createSpan();
+		weekCounter.id = "weeklynote-statusbar-week-counter";
+
+		this.app.workspace.on(
+			"active-leaf-change",
+			(leaf: WorkspaceLeaf | null) => {
+				if (leaf && leaf.view instanceof MarkdownView) {
+					const file = leaf.view.file;
+					if (file) {
+						const note = fromPath(file.path);
+						if (note) {
+							weekCounter.setText(`Week ${note.weekIndex}`);
+							return;
+						}
+					}
+				}
+				weekCounter.setText("");
+			}
+		);
 
 		this.app.workspace.on("file-open", async (file: TFile | null) => {
 			if (!file) {

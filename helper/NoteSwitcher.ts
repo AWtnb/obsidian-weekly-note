@@ -128,8 +128,8 @@ export const searchAndFocusLine = (app: App, search: string) => {
 };
 
 export const focusDailyLine = (app: App, date: Date | null = null) => {
-	const today = toDateString(date || new Date());
-	searchAndFocusLine(app, today);
+	const s = toDateString(date || new Date());
+	searchAndFocusLine(app, s);
 };
 
 interface FileOpenedCallback {
@@ -237,7 +237,7 @@ export class DateInputModal extends Modal {
 					if (Number.isNaN(Date.parse(label))) {
 						return null;
 					}
-					const d = new Date(label);
+					const d = new Date(ymd.y, ymd.m - 1, ymd.d);
 					return {
 						label: label,
 						href: getNotePath(parentPath, d),
