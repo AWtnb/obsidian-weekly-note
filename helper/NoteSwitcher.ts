@@ -1,5 +1,5 @@
 import { App, Modal, Notice } from "obsidian";
-import { toDateString, WeeklyNote } from "./Weeklynote";
+import { fromPath, fromWeek, toDateString, WeeklyNote } from "./Weeklynote";
 
 const splitAt = (s: string, i: number): [number, number] => {
 	const a = Number(s.substring(0, i));
@@ -185,7 +185,21 @@ export class DateInputModal extends Modal {
 			focusDailyLine(this.app, d);
 		});
 		if (result) {
-			new Notice(`Opened note containing ${date}`, 4000);
+			const cur = fromWeek();
+			const to = fromPath(path);
+			const delta = cur.weekDelta(to!);
+			if (delta != 0) {
+				let msg = `Opened note for ${date} (`;
+				if (0 < delta) {
+					msg += "+";
+				}
+				msg += `${delta} week`;
+				if (1 < Math.abs(delta)) {
+					msg += "s";
+				}
+				msg += ")";
+				new Notice(msg, 10000);
+			}
 		}
 		this.close();
 	}

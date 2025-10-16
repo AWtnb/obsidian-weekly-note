@@ -70,6 +70,22 @@ export class WeeklyNote {
 		);
 		return Math.floor(daysCount / 7) + 1;
 	}
+	weekDelta(another: WeeklyNote): number {
+		const start = new Date(
+			this.start.Year,
+			this.start.Month - 1,
+			this.start.Day
+		);
+		const end = new Date(
+			another.start.Year,
+			another.start.Month - 1,
+			another.start.Day
+		);
+		const daysCount = Math.floor(
+			(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+		);
+		return Math.floor(daysCount / 7) + 1;
+	}
 }
 
 export const fromWeek = (delta: number = 0): WeeklyNote => {
