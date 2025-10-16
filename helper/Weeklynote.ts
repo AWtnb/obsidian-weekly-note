@@ -84,7 +84,7 @@ export class WeeklyNote {
 		const daysCount = Math.floor(
 			(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
 		);
-		return Math.floor(daysCount / 7) + 1;
+		return Math.floor(daysCount / 7);
 	}
 }
 
