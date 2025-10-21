@@ -131,7 +131,9 @@ const fromYear = (year: number): WeeklyNote[] => {
 };
 
 export const DEFAULT_TEMPLATE = [
-	"prev: {{prev}} next: {{next}}\n",
+	"Week {{index}}",
+	"prev: {{prev}}",
+	"next: {{next}}\n",
 	"# 月 {{Mon}}\n",
 	"# 火 {{Tue}}\n",
 	"# 水 {{Wed}}\n",
@@ -237,7 +239,8 @@ export class WeeklyNoteModal extends Modal {
 			.replace(new RegExp(`{{next}}`, "g"), () => {
 				if (next) return `[[${next.path}]]`;
 				return "";
-			});
+			})
+			.replace(new RegExp(`{{index}}`, "g"), String(note.weekIndex));
 		return filled;
 	}
 
