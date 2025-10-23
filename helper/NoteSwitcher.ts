@@ -1,7 +1,5 @@
 import { App, Modal, Notice } from "obsidian";
 import {
-	fromPath,
-	fromWeek,
 	notifyWeekDelta,
 	toDateString,
 	WeeklyNote,

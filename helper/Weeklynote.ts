@@ -8,6 +8,14 @@ const toMMdd = (date: Date): string => {
 	return padZero(date.getMonth() + 1) + padZero(date.getDate());
 };
 
+const annualFirstMonday = (year: number): Date => {
+	const startDate = new Date(year, 0, 1);
+	const startDayOfWeek = startDate.getDay();
+	const d = new Date(startDate);
+	d.setDate(startDate.getDate() + ((8 - startDayOfWeek) % 7));
+	return d;
+};
+
 interface StartOfWeek {
 	Year: number;
 	Month: number;
@@ -17,6 +25,7 @@ interface StartOfWeek {
 export class WeeklyNote {
 	readonly name: string;
 	readonly start: StartOfWeek;
+	readonly weekIndex: number;
 	private parentPath: string = "";
 	constructor(monday: Date) {
 		const sunday = new Date(monday);
@@ -27,10 +36,17 @@ export class WeeklyNote {
 			Month: monday.getMonth() + 1,
 			Day: monday.getDate(),
 		};
+		const fm = annualFirstMonday(this.start.Year);
+		const daysCount = Math.floor(
+			(monday.getTime() - fm.getTime()) / (1000 * 60 * 60 * 24)
+		);
+		this.weekIndex = Math.floor(daysCount / 7) + 1;
 	}
+
 	setParent(name: string) {
 		this.parentPath = name;
 	}
+
 	get path(): string {
 		const p = `${this.parentPath}/${this.start.Year}/${this.name}`;
 		if (p.startsWith("/")) {
@@ -38,7 +54,8 @@ export class WeeklyNote {
 		}
 		return p;
 	}
-	private getMonday(delta: number): WeeklyNote {
+
+	increment(delta: number = 1): WeeklyNote {
 		const monday = new Date(
 			this.start.Year,
 			this.start.Month - 1,
@@ -48,28 +65,7 @@ export class WeeklyNote {
 		note.setParent(this.parentPath);
 		return note;
 	}
-	increment(): WeeklyNote {
-		return this.getMonday(1);
-	}
-	decrement(): WeeklyNote {
-		return this.getMonday(-1);
-	}
-	get weekIndex(): number {
-		const startDate = new Date(this.start.Year, 0, 1);
-		const startDayOfWeek = startDate.getDay();
-		const firstMonday = new Date(startDate);
-		firstMonday.setDate(startDate.getDate() + ((8 - startDayOfWeek) % 7));
 
-		const monday = new Date(
-			this.start.Year,
-			this.start.Month - 1,
-			this.start.Day
-		);
-		const daysCount = Math.floor(
-			(monday.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24)
-		);
-		return Math.floor(daysCount / 7) + 1;
-	}
 	weekDelta(another: WeeklyNote): number {
 		const start = new Date(
 			this.start.Year,
@@ -116,12 +112,8 @@ export const fromPath = (path: string): WeeklyNote | null => {
 };
 
 const fromYear = (year: number): WeeklyNote[] => {
-	const startDate = new Date(year, 0, 1);
-	const startDayOfWeek = startDate.getDay();
-	const firstMonday = new Date(startDate);
-	firstMonday.setDate(startDate.getDate() + ((8 - startDayOfWeek) % 7));
 	const notes: WeeklyNote[] = [];
-	let monday = firstMonday;
+	let monday = annualFirstMonday(year);
 	while (monday.getFullYear() === year) {
 		const note = new WeeklyNote(monday);
 		notes.push(note);
@@ -253,11 +245,11 @@ export class WeeklyNoteModal extends Modal {
 		});
 		filled = filled
 			.replace(new RegExp(`{{prev}}`, "g"), () => {
-				if (prev) return `[[${prev.path}]]`;
+				if (prev) return `[[${prev.path}|${prev.name}]]`;
 				return "";
 			})
 			.replace(new RegExp(`{{next}}`, "g"), () => {
-				if (next) return `[[${next.path}]]`;
+				if (next) return `[[${next.path}|${next.name}]]`;
 				return "";
 			})
 			.replace(new RegExp(`{{index}}`, "g"), String(note.weekIndex));

@@ -107,7 +107,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		const note = fromPath(file.path);
 		if (!note) {
 			new Notice(
-				"Note path is invalid! Note must be MMdd-MMdd format under year-named folder.",
+				"Note path is invalid format!",
 				0
 			);
 			return null;
@@ -281,7 +281,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			callback: () => {
 				const note = this.getActiveNote();
 				if (note) {
-					const prev = note.decrement();
+					const prev = note.increment(-1);
 					this.openNote(prev.path);
 				}
 			},
@@ -294,7 +294,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			callback: () => {
 				const note = this.getActiveNote();
 				if (note) {
-					const prev = note.decrement();
+					const prev = note.increment(-1);
 					this.openNote(prev.path, true);
 				}
 			},
@@ -303,7 +303,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addRibbonIcon("square-arrow-left", COMMAND_OpenPrevNote, () => {
 			const note = this.getActiveNote();
 			if (note) {
-				const prev = note.decrement();
+				const prev = note.increment(-1);
 				this.openNote(prev.path);
 			}
 		});
