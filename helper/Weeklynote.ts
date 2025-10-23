@@ -130,6 +130,24 @@ const fromYear = (year: number): WeeklyNote[] => {
 	return notes;
 };
 
+export const notifyWeekDelta = (path: string) => {
+	const cur = fromWeek();
+	const to = fromPath(path);
+	const delta = cur.weekDelta(to!);
+	if (delta != 0) {
+		let msg = `Opened note (`;
+		if (0 < delta) {
+			msg += "+";
+		}
+		msg += `${delta} week`;
+		if (1 < Math.abs(delta)) {
+			msg += "s";
+		}
+		msg += ")";
+		new Notice(msg, 10000);
+	}
+};
+
 export const DEFAULT_TEMPLATE = [
 	"Week {{index}}",
 	"prev: {{prev}}",

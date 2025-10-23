@@ -1,5 +1,6 @@
 import { App, Modal, TFile } from "obsidian";
 import { openNote, searchAndFocusLine } from "./NoteSwitcher";
+import { notifyWeekDelta } from "./Weeklynote";
 
 export class FutureNoteModal extends Modal {
 	constructor(app: App) {
@@ -17,7 +18,7 @@ export class FutureNoteModal extends Modal {
 				const t = Date.parse(
 					`${d}-${f.substring(0, 2)}-${f.substring(2, 4)}`
 				);
-				return now.getTime() < t;
+				return !Number.isNaN(t) && now.getTime() < t;
 			})
 			.sort((a, b) => {
 				if (a.path < b.path) {
@@ -33,6 +34,7 @@ export class FutureNoteModal extends Modal {
 	private openNote(path: string, search: string) {
 		openNote(this.app, path, "split", () => {
 			searchAndFocusLine(this.app, search);
+			notifyWeekDelta(path);
 		});
 		this.close();
 	}
