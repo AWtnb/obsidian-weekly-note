@@ -138,7 +138,7 @@ export const notifyWeekDelta = (path: string) => {
 		if (1 < Math.abs(delta)) {
 			msg += "s";
 		}
-		new Notice(`(${msg})`, 15000);
+		new Notice(`${msg} from now`, 15000);
 	}
 };
 
