@@ -97,15 +97,17 @@ export const fromWeek = (delta: number = 0): WeeklyNote => {
 
 interface NoteNameParts {
 	index: string;
-	start: string;
-	end: string;
+	startMM: string;
+	startDD: string;
+	endMM: string;
+	endDD: string;
 }
 
-const parseNoteName = (name: string): NoteNameParts | null => {
-	const m = name.match(/^(\d{2}) \((\d{4})-(\d{4})\)\.md$/);
+export const parseNoteName = (name: string): NoteNameParts | null => {
+	const m = name.match(/^(\d{2}) \((\d{2})(\d{2})-(\d{2})(\d{2})\)\.md$/);
 	if (!m) return null;
-	const [_, index, start, end] = m;
-	return { index, start, end };
+	const [_, index, startMM, startDD, endMM, endDD] = m;
+	return { index, startMM, startDD, endMM, endDD };
 };
 
 export const fromPath = (path: string): WeeklyNote | null => {
@@ -118,8 +120,8 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	if (!name) return null;
 	const nameParts = parseNoteName(name);
 	if (!nameParts) return null;
-	const mm = nameParts.start.substring(0, 2);
-	const dd = nameParts.start.substring(2, 4);
+	const mm = nameParts.startMM;
+	const dd = nameParts.startDD;
 	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
 	const note = new WeeklyNote(monday);
 	note.setParent(pathElems.slice(0, -2).join("/"));

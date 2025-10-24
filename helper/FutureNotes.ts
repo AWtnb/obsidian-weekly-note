@@ -1,6 +1,6 @@
 import { App, Modal, TFile } from "obsidian";
 import { openNote, searchAndFocusLine } from "./NoteSwitcher";
-import { notifyWeekDelta } from "./Weeklynote";
+import { notifyWeekDelta, parseNoteName } from "./Weeklynote";
 
 export class FutureNoteModal extends Modal {
 	constructor(app: App) {
@@ -13,12 +13,18 @@ export class FutureNoteModal extends Modal {
 			.getFiles()
 			.filter((file) => {
 				const elems = file.path.split("/");
-				const d = elems.at(-2) || "";
-				const f = elems.at(-1) || "";
-				const t = Date.parse(
-					`${d}-${f.substring(0, 2)}-${f.substring(2, 4)}`
+				const d = elems.at(-2);
+				if (!d) return false;
+				const f = elems.at(-1);
+				if (!f) return false;
+				const n = parseNoteName(f);
+				if (!n) return false;
+				const t = new Date(
+					Number(d),
+					Number(n.startMM) - 1,
+					Number(n.startDD)
 				);
-				return !Number.isNaN(t) && now.getTime() < t;
+				return !Number.isNaN(t.getTime()) && now < t;
 			})
 			.sort((a, b) => {
 				if (a.path < b.path) {
