@@ -30,7 +30,6 @@ export class WeeklyNote {
 	constructor(monday: Date) {
 		const sunday = new Date(monday);
 		sunday.setDate(monday.getDate() + 6);
-		this.name = `${toMMdd(monday)}-${toMMdd(sunday)}.md`;
 		this.start = {
 			Year: monday.getFullYear(),
 			Month: monday.getMonth() + 1,
@@ -41,6 +40,8 @@ export class WeeklyNote {
 			(monday.getTime() - fm.getTime()) / (1000 * 60 * 60 * 24)
 		);
 		this.weekIndex = Math.floor(daysCount / 7) + 1;
+		const idx = padZero(this.weekIndex);
+		this.name = `${idx} (${toMMdd(monday)}-${toMMdd(sunday)}).md`;
 	}
 
 	setParent(name: string) {
@@ -94,6 +95,19 @@ export const fromWeek = (delta: number = 0): WeeklyNote => {
 	return note;
 };
 
+interface NoteNameParts {
+	index: string;
+	start: string;
+	end: string;
+}
+
+const parseNoteName = (name: string): NoteNameParts | null => {
+	const m = name.match(/^(\d{2}) \((\d{4})-(\d{4})\)\.md$/);
+	if (!m) return null;
+	const [_, index, start, end] = m;
+	return { index, start, end };
+};
+
 export const fromPath = (path: string): WeeklyNote | null => {
 	const pathElems = path.split("/");
 	if (pathElems.length < 2) return null;
@@ -102,9 +116,10 @@ export const fromPath = (path: string): WeeklyNote | null => {
 	if (!/^\d{4}/.test(folder)) return null;
 	const name = pathElems.at(-1);
 	if (!name) return null;
-	if (!/^\d{4}/.test(name)) return null;
-	const mm = name.substring(0, 2);
-	const dd = name.substring(2, 4);
+	const nameParts = parseNoteName(name);
+	if (!nameParts) return null;
+	const mm = nameParts.start.substring(0, 2);
+	const dd = nameParts.start.substring(2, 4);
 	const monday = new Date(Number(folder), Number(mm) - 1, Number(dd));
 	const note = new WeeklyNote(monday);
 	note.setParent(pathElems.slice(0, -2).join("/"));
@@ -245,11 +260,11 @@ export class WeeklyNoteModal extends Modal {
 		});
 		filled = filled
 			.replace(new RegExp(`{{prev}}`, "g"), () => {
-				if (prev) return `[[${prev.path}|${prev.name}]]`;
+				if (prev) return `[[${prev.path}|Week ${prev.weekIndex}]]`;
 				return "";
 			})
 			.replace(new RegExp(`{{next}}`, "g"), () => {
-				if (next) return `[[${next.path}|${next.name}]]`;
+				if (next) return `[[${next.path}|Week ${next.weekIndex}]]`;
 				return "";
 			})
 			.replace(new RegExp(`{{index}}`, "g"), String(note.weekIndex));
