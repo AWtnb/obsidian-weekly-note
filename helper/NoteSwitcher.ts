@@ -1,9 +1,5 @@
 import { App, Modal, Notice } from "obsidian";
-import {
-	notifyWeekDelta,
-	toDateString,
-	WeeklyNote,
-} from "./Weeklynote";
+import { notifyWeekDelta, toDateString, WeeklyNote } from "./Weeklynote";
 
 const splitAt = (s: string, i: number): [number, number] => {
 	const a = Number(s.substring(0, i));
@@ -26,7 +22,7 @@ const asYMDs = (s: string): YMD[] => {
 	const year = now.getFullYear();
 	const month = now.getMonth() + 1;
 	const num = Number(s);
-	if (s.length < 1 || Number.isNaN(s) || num < 1) {
+	if (s.length < 1 || isNaN(num) || num < 1) {
 		return [asYMD(0, 0, 0)];
 	}
 
