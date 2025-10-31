@@ -206,7 +206,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const ed = new NoteEditor(editor);
 				const lastPlain = ed.getLastLineIndex(nonListLine);
 				const to = lastPlain || 0;
-				editor.setCursor(to);
+				editor.setCursor(to, 0);
 				revealLine(editor, to);
 			},
 		});
@@ -300,14 +300,6 @@ export default class WeeklyNotePlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon("square-arrow-left", COMMAND_OpenPrevNote, () => {
-			const note = this.getActiveNote();
-			if (note) {
-				const prev = note.increment(-1);
-				this.openNote(prev.path);
-			}
-		});
-
 		this.addCommand({
 			id: "weeklynote-open-next-note",
 			icon: "square-arrow-right",
@@ -332,14 +324,6 @@ export default class WeeklyNotePlugin extends Plugin {
 					this.openNote(next.path, true);
 				}
 			},
-		});
-
-		this.addRibbonIcon("square-arrow-right", COMMAND_OpenNextNote, () => {
-			const note = this.getActiveNote();
-			if (note) {
-				const next = note.increment();
-				this.openNote(next.path);
-			}
 		});
 
 		this.addCommand({
