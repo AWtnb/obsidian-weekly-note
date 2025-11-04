@@ -151,7 +151,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-scroll-to-cursor",
-			icon: "move-down",
+			icon: "move-vertical",
 			name: COMMAND_ScrollToCursor,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const selTop = editor.getCursor("from").line;
@@ -226,20 +226,20 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-open-note-by-date",
-			icon: "book-open",
+			icon: "calendar-search",
 			name: COMMAND_OpenNoteByDate,
 			callback: () => {
 				new DateInputModal(this.app, false).open();
 			},
 		});
 
-		this.addRibbonIcon("book-open", COMMAND_OpenNoteByDate, () => {
+		this.addRibbonIcon("calendar-search", COMMAND_OpenNoteByDate, () => {
 			new DateInputModal(this.app, false).open();
 		});
 
 		this.addCommand({
 			id: "weeklynote-open-note-by-date-to-right",
-			icon: "book-open",
+			icon: "calendar-search",
 			name: COMMAND_OpenNoteByDateToRight,
 			callback: () => {
 				new DateInputModal(this.app, true).open();
@@ -248,7 +248,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "weeklynote-open-note",
-			icon: "calendar-fold",
+			icon: "refresh-ccw",
 			name: COMMAND_OpenNote,
 			callback: () => {
 				const note = fromWeek();
@@ -256,21 +256,21 @@ export default class WeeklyNotePlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon("calendar-fold", COMMAND_OpenNote, () => {
+		this.addRibbonIcon("refresh-ccw", COMMAND_OpenNote, () => {
 			const note = fromWeek();
 			this.openNote(note.path);
 		});
 
 		this.addCommand({
 			id: "weeklynote-search-future-note",
-			icon: "file-search",
+			icon: "milestone",
 			name: COMMAND_SearchFutureNote,
 			callback: () => {
 				new FutureNoteModal(this.app).open();
 			},
 		});
 
-		this.addRibbonIcon("file-search", COMMAND_SearchFutureNote, () => {
+		this.addRibbonIcon("milestone", COMMAND_SearchFutureNote, () => {
 			new FutureNoteModal(this.app).open();
 		});
 
