@@ -21,6 +21,7 @@ const asYMDs = (s: string): YMD[] => {
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = now.getMonth() + 1;
+	const date = now.getDate();
 	const num = Number(s);
 	if (s.length < 1 || isNaN(num) || num < 1) {
 		return [asYMD(0, 0, 0)];
@@ -32,6 +33,9 @@ const asYMDs = (s: string): YMD[] => {
 	if (s.length == 2) {
 		const a = [asYMD(year, month, num), asYMD(year, num, 1)];
 		const [m, d] = splitAt(s, 1);
+		if (m < month || (m == month && d <= date)) {
+			a.push(asYMD(year + 1, m, d));
+		}
 		a.push(asYMD(year, m, d));
 		return a;
 	}
@@ -39,9 +43,15 @@ const asYMDs = (s: string): YMD[] => {
 		const a = [];
 		// mmd
 		const [mm, d] = splitAt(s, 2);
+		if (mm < month || (mm == month && d <= date)) {
+			a.push(asYMD(year + 1, mm, d));
+		}
 		a.push(asYMD(year, mm, d));
 		// mdd
 		const [m, dd] = splitAt(s, 1);
+		if (m < month || (m == month && d <= date)) {
+			a.push(asYMD(year + 1, m, dd));
+		}
 		a.push(asYMD(year, m, dd));
 		// yym(1)
 		a.push(asYMD(2000 + mm, d, 1));
@@ -51,6 +61,9 @@ const asYMDs = (s: string): YMD[] => {
 		const a = [];
 		// mmdd
 		const [mm, dd] = splitAt(s, 2);
+		if (mm < month || (mm == month && dd <= date)) {
+			a.push(asYMD(year + 1, mm, dd));
+		}
 		a.push(asYMD(year, mm, dd));
 		// yymm(1)
 		a.push(asYMD(2000 + mm, dd, 1));
