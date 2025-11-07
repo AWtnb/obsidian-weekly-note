@@ -149,7 +149,7 @@ interface FileOpenedCallback {
 	(): void;
 }
 
-type OpenMode = "currentTab" | "nextTab" | "split";
+export type OpenMode = "currentTab" | "nextTab" | "split";
 
 export const openNote = (
 	app: App,
@@ -157,7 +157,7 @@ export const openNote = (
 	mode: OpenMode,
 	onOpen: FileOpenedCallback | null = null
 ): boolean => {
-	const position = mode == "split" ? mode : mode == "currentTab";
+	const position = mode == "split" ? mode : mode != "currentTab";
 	if (app.vault.getFileByPath(path)) {
 		app.workspace.openLinkText("", path, position).then(() => {
 			if (onOpen) {

@@ -18,7 +18,12 @@ import {
 	DEFAULT_TEMPLATE,
 } from "helper/Weeklynote";
 import { NoteEditor, nonListLine, unFinishedListLine } from "helper/NoteEditor";
-import { focusDailyLine, DateInputModal, openNote } from "helper/NoteSwitcher";
+import {
+	focusDailyLine,
+	DateInputModal,
+	openNote,
+	OpenMode,
+} from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
 import { FutureNoteModal } from "helper/FutureNotes";
 
@@ -85,17 +90,15 @@ const revealLine = (
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
-	private openNote(path: string, split: boolean = false) {
+	private openNote(path: string, mode: OpenMode = "currentTab") {
 		const note = this.getActiveNote();
 		if (note && note.path == path) {
 			focusDailyLine(this.app);
 			return;
 		}
-		if (split) {
-			openNote(this.app, path, "split");
-		} else {
-			openNote(this.app, path, "nextTab");
-		}
+		openNote(this.app, path, mode, () => {
+			focusDailyLine(this.app);
+		});
 	}
 
 	private getActiveNote(): WeeklyNote | null {
@@ -106,10 +109,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		}
 		const note = fromPath(file.path);
 		if (!note) {
-			new Notice(
-				"Note path is invalid format!",
-				0
-			);
+			new Notice("Note path is invalid format!", 0);
 			return null;
 		}
 		return note;
@@ -295,7 +295,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = this.getActiveNote();
 				if (note) {
 					const prev = note.increment(-1);
-					this.openNote(prev.path, true);
+					this.openNote(prev.path, "split");
 				}
 			},
 		});
@@ -321,7 +321,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = this.getActiveNote();
 				if (note) {
 					const next = note.increment();
-					this.openNote(next.path, true);
+					this.openNote(next.path, "split");
 				}
 			},
 		});
