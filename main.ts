@@ -190,11 +190,19 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "chevrons-down",
 			name: COMMAND_JumpToNextNonListLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const cursorTop = editor.getCursor("from");
+				const line = editor.getLine(cursorTop.line);
 				const ed = new NoteEditor(editor);
-				const nextPlain = ed.getNextLineIndex(nonListLine);
-				const to = nextPlain || ed.maxLineIndex;
-				editor.setCursor(to);
-				revealLine(editor, to);
+				let to = ed.maxLineIndex;
+				if (nonListLine(line) && cursorTop.ch != line.length) {
+					to = cursorTop.line;
+				} else {
+					const nextPlain = ed.getNextLineIndex(nonListLine);
+					if (nextPlain) {
+						to = nextPlain;
+					}
+				}
+				editor.setCursor(to, editor.getLine(to).length);
 			},
 		});
 
@@ -203,11 +211,19 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "chevrons-up",
 			name: COMMAND_JumpToLastNonListLine,
 			editorCallback: (editor: Editor, _: MarkdownView) => {
+				const cursorBottom = editor.getCursor("to");
+				const line = editor.getLine(cursorBottom.line);
 				const ed = new NoteEditor(editor);
-				const lastPlain = ed.getLastLineIndex(nonListLine);
-				const to = lastPlain || 0;
+				let to = 0;
+				if (nonListLine(line) && cursorBottom.ch != 0) {
+					to = cursorBottom.line;
+				} else {
+					const lastPlain = ed.getLastLineIndex(nonListLine);
+					if (lastPlain) {
+						to = lastPlain;
+					}
+				}
 				editor.setCursor(to, 0);
-				revealLine(editor, to);
 			},
 		});
 
