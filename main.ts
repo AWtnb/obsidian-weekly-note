@@ -306,8 +306,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = this.getActiveNote();
 				if (note) {
 					const prev = note.increment(-1);
-					this.openNote(prev.path, "currentTab");
-					this.openNote(note.path, "split");
+					this.openNote(prev.path, "split-left");
 				}
 			},
 		});
@@ -333,7 +332,7 @@ export default class WeeklyNotePlugin extends Plugin {
 				const note = this.getActiveNote();
 				if (note) {
 					const next = note.increment();
-					this.openNote(next.path, "split");
+					this.openNote(next.path, "split-right");
 				}
 			},
 		});

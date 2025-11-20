@@ -149,7 +149,7 @@ interface FileOpenedCallback {
 	(): void;
 }
 
-export type OpenMode = "currentTab" | "nextTab" | "split";
+export type OpenMode = "currentTab" | "nextTab" | "split-left" | "split-right";
 
 export const openNote = (
 	app: App,
@@ -157,18 +157,25 @@ export const openNote = (
 	mode: OpenMode,
 	onOpen: FileOpenedCallback | null = null
 ): boolean => {
-	const position = mode == "split" ? mode : mode != "currentTab";
-	if (app.vault.getFileByPath(path)) {
-		app.workspace.openLinkText("", path, position).then(() => {
-			if (onOpen) {
-				onOpen();
-			}
-		});
-		return true;
+	const note = app.vault.getFileByPath(path);
+	if (!note) {
+		new Notice(`ERROR: "${path}" not found!`, 0);
+		return false;
 	}
-	const s = `ERROR: "${path}" not found!`;
-	new Notice(s, 0);
-	return false;
+	const callback = () => onOpen?.();
+	if (mode.endsWith("Tab")) {
+		app.workspace
+			.openLinkText("", path, mode != "currentTab")
+			.then(callback);
+	} else {
+		const leaf = app.workspace.createLeafBySplit(
+			app.workspace.getLeaf(),
+			"vertical",
+			mode.endsWith("left")
+		);
+		leaf.openFile(note).then(callback);
+	}
+	return true;
 };
 
 export class DateInputModal extends Modal {
@@ -179,7 +186,7 @@ export class DateInputModal extends Modal {
 			this.openMode = "currentTab";
 		} else {
 			if (split) {
-				this.openMode = "split";
+				this.openMode = "split-right";
 			} else {
 				this.openMode = "nextTab";
 			}
@@ -206,7 +213,7 @@ export class DateInputModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.id = "jump-modal";
-		if (this.openMode == "split") {
+		if (this.openMode.startsWith("split")) {
 			contentEl.createDiv().setText("Open to right:");
 		} else {
 			contentEl.createDiv().setText("Open:");
