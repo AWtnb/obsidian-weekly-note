@@ -38,7 +38,7 @@ export class FutureNoteModal extends Modal {
 	}
 
 	private openNote(path: string, search: string) {
-		openNote(this.app, path, "split", () => {
+		openNote(this.app, path, "split-right", () => {
 			searchAndFocusLine(this.app, search);
 			notifyWeekDelta(path);
 		});
