@@ -30,7 +30,7 @@ import { FutureNoteModal } from "helper/FutureNotes";
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
 const COMMAND_OpenPrevNote = "前のノートを開く";
-const COMMAND_OpenPrevNoteToRight = "前のノートを右に開く";
+const COMMAND_OpenPrevNoteToLeft = "前のノートを左に開く";
 const COMMAND_OpenNextNote = "次のノートを開く";
 const COMMAND_OpenNextNoteToRight = "次のノートを右に開く";
 const COMMAND_SendToNextNote = "次のノートに送る";
@@ -91,11 +91,6 @@ export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
 
 	private openNote(path: string, mode: OpenMode = "currentTab") {
-		const note = this.getActiveNote();
-		if (note && note.path == path) {
-			focusDailyLine(this.app);
-			return;
-		}
 		openNote(this.app, path, mode, () => {
 			focusDailyLine(this.app);
 		});
@@ -304,14 +299,15 @@ export default class WeeklyNotePlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "weeklynote-open-prev-note-to-right",
+			id: "weeklynote-open-prev-note-to-left",
 			icon: "square-arrow-left",
-			name: COMMAND_OpenPrevNoteToRight,
+			name: COMMAND_OpenPrevNoteToLeft,
 			callback: () => {
 				const note = this.getActiveNote();
 				if (note) {
 					const prev = note.increment(-1);
-					this.openNote(prev.path, "split");
+					this.openNote(prev.path, "currentTab");
+					this.openNote(note.path, "split");
 				}
 			},
 		});
