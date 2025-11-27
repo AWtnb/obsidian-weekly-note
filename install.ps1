@@ -14,21 +14,15 @@ function Copy-PluginFiles {
     Get-ChildItem $PSScriptRoot | Where-Object {$_.Name -in @("main.js", "styles.css", "manifest.json")} | Copy-Item -Destination $extensionDir
 }
 
-try {
-    Get-Command npm -ErrorAction stop > $null
-    if (Test-Path -Path ($PSScriptRoot | Join-Path -ChildPath "node_modules")) {
-        npm install
+if ((Get-Command npm -ErrorAction SilentlyContinue).Source -eq "") {
+    "npm not found on this computer." | Write-Error
+}
+else {
+    npm install
+    if ($LASTEXITCODE -eq 0) {
+        npm run build
         if ($LASTEXITCODE -eq 0) {
-            npm run build
-            if ($LASTEXITCODE -eq 0) {
-                Copy-PluginFiles -vaultDir $args[0]
-            }
+            Copy-PluginFiles -vaultDir $args[0]
         }
     }
-    else {
-        "node packages not installed. Run ``npm install`` first." | Write-Host
-    }
-}
-catch {
-    Write-Error $_
 }
