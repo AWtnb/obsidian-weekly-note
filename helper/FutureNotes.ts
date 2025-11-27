@@ -81,7 +81,7 @@ export class FutureNoteModal extends Modal {
 			});
 		};
 
-		searchBox.oninput = () => {
+		const searchNotes = () => {
 			clearResults();
 			if (searchBox.value.trim().length < 1) {
 				return;
@@ -92,6 +92,16 @@ export class FutureNoteModal extends Modal {
 				if (i == -1) return;
 				makeResult(file, content, searchBox.value);
 			});
+		};
+
+		let debounceTimerID: number | undefined;
+		searchBox.oninput = () => {
+			if (debounceTimerID !== undefined) {
+				clearTimeout(debounceTimerID);
+			}
+			debounceTimerID = window.setTimeout(() => {
+				searchNotes();
+			}, 140);
 		};
 	}
 

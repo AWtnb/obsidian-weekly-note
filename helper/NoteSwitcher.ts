@@ -248,8 +248,7 @@ export class DateInputModal extends Modal {
 			};
 		};
 
-		const parentPath = this.getActiveNoteParent();
-		input.oninput = () => {
+		const listupNotes = () => {
 			clearBox();
 			asYMDs(input.value)
 				.map((ymd): Button | null => {
@@ -260,7 +259,7 @@ export class DateInputModal extends Modal {
 					const d = new Date(ymd.y, ymd.m - 1, ymd.d);
 					return {
 						label: label,
-						href: getNotePath(parentPath, d),
+						href: getNotePath(this.getActiveNoteParent(), d),
 					};
 				})
 				.forEach((b) => {
@@ -269,16 +268,15 @@ export class DateInputModal extends Modal {
 					}
 				});
 		};
-		input.onkeydown = (ev) => {
-			if (ev.key != "Enter") {
-				return;
+
+		let debounceTimerID: number | undefined;
+		input.oninput = () => {
+			if (debounceTimerID !== undefined) {
+				clearTimeout(debounceTimerID);
 			}
-			ev.preventDefault();
-			const buttons =
-				this.contentEl.querySelectorAll(".button-box button");
-			if (0 < buttons.length) {
-				(buttons[0] as HTMLElement).focus();
-			}
+			debounceTimerID = window.setTimeout(() => {
+				listupNotes();
+			}, 140);
 		};
 	}
 
