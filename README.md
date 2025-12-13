@@ -21,7 +21,7 @@
 
 Run [install.ps1](install.ps1) with vault folder path as an argument.
 
-管理対象のフォルダパスを引数にして [install.ps1](install.ps1) を実行する。
+Vaultのフォルダパスを引数にして [install.ps1](install.ps1) を実行する。
 
 ```
 # Example
