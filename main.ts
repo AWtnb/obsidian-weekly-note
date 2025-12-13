@@ -49,6 +49,8 @@ interface WeeklyNoteSettings {
 	template: string;
 	holidays: string[];
 	backupDir: string;
+	autoBackupEnabled: boolean;
+	backupDebounceSeconds: number;
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
@@ -75,6 +77,8 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 		"2025-11-24 振替休日",
 	],
 	backupDir: "",
+	autoBackupEnabled: true,
+	backupDebounceSeconds: 30,
 };
 
 const revealLine = (
@@ -93,6 +97,7 @@ const revealLine = (
 
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
+	private backupDebounceTimer: NodeJS.Timeout | null = null;
 
 	private openNote(path: string, mode: OpenMode = "currentTab") {
 		openNote(this.app, path, mode, () => {
@@ -112,6 +117,26 @@ export default class WeeklyNotePlugin extends Plugin {
 			return null;
 		}
 		return note;
+	}
+
+	private scheduleBackup(): void {
+		if (!this.settings.autoBackupEnabled || !this.settings.backupDir) {
+			return;
+		}
+
+		if (this.backupDebounceTimer) {
+			clearTimeout(this.backupDebounceTimer);
+		}
+
+		const debounceTime = this.settings.backupDebounceSeconds * 1000;
+		this.backupDebounceTimer = setTimeout(() => {
+			this.runBackup();
+			this.backupDebounceTimer = null;
+		}, debounceTime);
+	}
+
+	private async runBackup(): Promise<void> {
+		await backupVault(this.app, this.settings.backupDir);
 	}
 
 	async onload() {
@@ -154,18 +179,38 @@ export default class WeeklyNotePlugin extends Plugin {
 			})
 		);
 
-		this.registerEvent(
-			this.app.workspace.on("quit", async () => {
-				await backupVault(this.app, this.settings.backupDir);
-			})
-		);
+		this.app.workspace.onLayoutReady(() => {
+			this.registerEvent(
+				this.app.vault.on("modify", () => {
+					this.scheduleBackup();
+				})
+			);
+
+			this.registerEvent(
+				this.app.vault.on("create", () => {
+					this.scheduleBackup();
+				})
+			);
+
+			this.registerEvent(
+				this.app.vault.on("delete", () => {
+					this.scheduleBackup();
+				})
+			);
+
+			this.registerEvent(
+				this.app.vault.on("rename", () => {
+					this.scheduleBackup();
+				})
+			);
+		});
 
 		this.addCommand({
 			id: "weeklynote-backup-vault",
 			icon: "save",
 			name: COMMAND_BackupVault,
 			callback: async () => {
-				await backupVault(this.app, this.settings.backupDir);
+				await this.runBackup();
 			},
 		});
 
@@ -374,7 +419,11 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.addSettingTab(new WeeklyNoteSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	onunload() {
+		if (this.backupDebounceTimer) {
+			clearTimeout(this.backupDebounceTimer);
+		}
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -456,5 +505,38 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 					})
 			)
 			.setClass("weeklynote-setting-box");
+
+		new Setting(containerEl)
+			.setName("Auto backup")
+			.setDesc(
+				"Enable auto backup on edit (modify / delete / create) file."
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.autoBackupEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.autoBackupEnabled = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Backup debounce seconds")
+			.setDesc("Seconds after the last edit to perform a backup.")
+			.addText((text) =>
+				text
+					.setValue(
+						String(this.plugin.settings.backupDebounceSeconds)
+					)
+					.setPlaceholder("1")
+					.onChange(async (value) => {
+						const n = Number(value);
+						if (isNaN(n) || n < 1) {
+							return;
+						}
+						this.plugin.settings.backupDebounceSeconds = n;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

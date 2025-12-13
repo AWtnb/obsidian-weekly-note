@@ -36,7 +36,8 @@ export const backupVault = async (
 			fs.writeFileSync(destPath, content, "utf8");
 			copiedCount++;
 		}
-		new Notice(`Backuped ${copiedCount} files to '${backupDir}'`);
+		new Notice(`Backuped ${copiedCount} files.`);
+		console.log(`Backuped ${copiedCount} files to '${backupDir}'`);
 	} catch (error) {
 		new Notice(`Backup error: ${error.message}`, 0);
 		console.error("Backup error:", error);

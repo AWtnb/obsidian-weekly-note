@@ -11,8 +11,10 @@
 - `Weekly-Note: カーソルまでスクロール` Scrolls to reveal cusor.
 - `Weekly-Note: 次の未完了リスト項目までジャンプ` Moves cursor down to next unfinished list item.
 - `Weekly-Note: 前の未完了リスト項目までジャンプ` Moves cursor up to last unfinished list item.
-- `Weekly-Note: 次の非リスト行までジャンプ` Moves cursot to next non-list-line;
-- `Weekly-Note: 前の非リスト行までジャンプ` Moves cursot to last non-list-line;
+- `Weekly-Note: 次の非リスト行までジャンプ` Moves cursot to next non-list-line.
+- `Weekly-Note: 前の非リスト行までジャンプ` Moves cursot to last non-list-line.
+- `Weekly-Note: 未来のノートから検索` Search for notes that are in the future from the point of command execution.
+- `Weekly-Note: 全ノートをバックアップ` Copies all note to specified directory.
 
 
 ## Install
