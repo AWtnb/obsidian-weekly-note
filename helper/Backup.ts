@@ -19,7 +19,7 @@ export const backupVault = async (
 	try {
 		backupDir = expandEnvVars(backupDir);
 		if (!fs.existsSync(backupDir)) {
-			new Notice(`Backup dir '${backupDir}' not exists!`);
+			new Notice(`Backup dir '${backupDir}' not exists!`, 0);
 			return;
 		}
 
