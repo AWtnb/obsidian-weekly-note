@@ -26,6 +26,7 @@ import {
 } from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
 import { FutureNoteModal } from "helper/FutureNotes";
+import { backupVault } from "helper/Backup";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -42,10 +43,12 @@ const COMMAND_JumpToLastUnFinishedListLine = "前の未完了リスト行まで�
 const COMMAND_JumpToNextNonListLine = "次の非リスト行までジャンプ";
 const COMMAND_JumpToLastNonListLine = "前の非リスト行までジャンプ";
 const COMMAND_SearchFutureNote = "未来のノートから検索";
+const COMMAND_BackupVault = "全ノートをバックアップ";
 
 interface WeeklyNoteSettings {
 	template: string;
 	holidays: string[];
+	backupDir: string;
 }
 
 const DEFAULT_SETTINGS: WeeklyNoteSettings = {
@@ -71,6 +74,7 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 		"2025-11-23 勤労感謝の日",
 		"2025-11-24 振替休日",
 	],
+	backupDir: "",
 };
 
 const revealLine = (
@@ -117,31 +121,52 @@ export default class WeeklyNotePlugin extends Plugin {
 		const weekCounter = statusbar.createSpan();
 		weekCounter.id = "weeklynote-statusbar-week-counter";
 
-		this.app.workspace.on(
-			"active-leaf-change",
-			(leaf: WorkspaceLeaf | null) => {
-				if (leaf && leaf.view instanceof MarkdownView) {
-					const file = leaf.view.file;
-					if (file) {
-						const note = fromPath(file.path);
-						if (note) {
-							weekCounter.setText(`Week ${note.weekIndex}`);
-							return;
+		this.registerEvent(
+			this.app.workspace.on(
+				"active-leaf-change",
+				(leaf: WorkspaceLeaf | null) => {
+					if (leaf && leaf.view instanceof MarkdownView) {
+						const file = leaf.view.file;
+						if (file) {
+							const note = fromPath(file.path);
+							if (note) {
+								weekCounter.setText(`Week ${note.weekIndex}`);
+								return;
+							}
 						}
 					}
+					weekCounter.setText("");
 				}
-				weekCounter.setText("");
-			}
+			)
 		);
 
-		this.app.workspace.on("file-open", async (file: TFile | null) => {
-			if (!file) {
-				return;
-			}
-			if (this.app.workspace.getLeavesOfType("markdown").length !== 1) {
-				return;
-			}
-			focusDailyLine(this.app);
+		this.registerEvent(
+			this.app.workspace.on("file-open", async (file: TFile | null) => {
+				if (!file) {
+					return;
+				}
+				if (
+					this.app.workspace.getLeavesOfType("markdown").length !== 1
+				) {
+					return;
+				}
+				focusDailyLine(this.app);
+			})
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("quit", async () => {
+				await backupVault(this.app, this.settings.backupDir);
+			})
+		);
+
+		this.addCommand({
+			id: "weeklynote-backup-vault",
+			icon: "save",
+			name: COMMAND_BackupVault,
+			callback: async () => {
+				await backupVault(this.app, this.settings.backupDir);
+			},
 		});
 
 		this.addCommand({
@@ -411,6 +436,22 @@ class WeeklyNoteSettingTab extends PluginSettingTab {
 						this.plugin.settings.holidays = value
 							.split("\n")
 							.filter((line) => line.trim());
+						await this.plugin.saveSettings();
+					})
+			)
+			.setClass("weeklynote-setting-box");
+
+		new Setting(containerEl)
+			.setName("Backup directory")
+			.setDesc(
+				"Directory path to backup all notes. (e.g. `${USERPROFILE}/obsidian_weeklynote_backup`)"
+			)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.backupDir)
+					.setPlaceholder("/path/to/backup/directory")
+					.onChange(async (value) => {
+						this.plugin.settings.backupDir = value;
 						await this.plugin.saveSettings();
 					})
 			)
