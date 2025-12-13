@@ -37,7 +37,7 @@ Copy over `main.js`, `styles.css`, `manifest.json` to `(VaultFolder)/.obsidian/p
 Run below command in Vault root directory.
 
 ```PowerShell
-$n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;code .;Pop-Location
+$n="obsidian-weekly-note";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;if (Get-Command code -ErrorAction SilentlyContinue){code .};Pop-Location
 ```
 
 Afterwords, run `npm i` and `npm run dev`.
