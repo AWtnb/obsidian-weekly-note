@@ -1,4 +1,4 @@
-import { App, Notice, Vault } from "obsidian";
+import { App, Notice } from "obsidian";
 import * as path from "path";
 import * as fs from "fs";
 
