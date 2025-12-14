@@ -28,6 +28,8 @@ Vaultのフォルダパスを引数にして [install.ps1](install.ps1) を実�
 .\install.ps1 C:\Users\awtnb\Schedule
 ```
 
+[CSS snippets](https://gist.github.com/AWtnb/80b5fe58663c4995faadca8f653e3e3b)
+
 ### Manual install
 
 Copy over `main.js`, `styles.css`, `manifest.json` to `(VaultFolder)/.obsidian/plugins/obsidian-weekly-note/` .
