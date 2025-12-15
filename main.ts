@@ -123,14 +123,18 @@ export default class WeeklyNotePlugin extends Plugin {
 		return note;
 	}
 
-	private get readyToBackup(): boolean {
+	private getFullpath(file: TFile): string {
+		return path.join(this.app.vault.getRoot().path, file.path);
+	}
+
+	private get backupRunnable(): boolean {
 		return (
 			this.settings.autoBackupEnabled && this.settings.backupDir !== ""
 		);
 	}
 
 	private scheduleBackup(file: TFile): void {
-		if (!this.readyToBackup) {
+		if (!this.backupRunnable) {
 			return;
 		}
 
@@ -148,7 +152,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	}
 
 	private async runBackup(): Promise<void> {
-		if (!this.readyToBackup) {
+		if (!this.backupRunnable) {
 			return;
 		}
 		const files = Array.from(this.filesToBackup);
@@ -159,20 +163,18 @@ export default class WeeklyNotePlugin extends Plugin {
 				backupNotice(`Backuped '${file.path}'`, false);
 			} catch (error) {
 				backupNotice(`Failed to backup '${file.path}': ${error}`, true);
-				if (
-					fs.existsSync(
-						path.join(this.app.vault.getRoot().path, file.path)
-					)
-				) {
+				if (fs.existsSync(this.getFullpath(file))) {
 					this.filesToBackup.add(file);
-					console.log(`${new Date()} Save '${file.path}' fo retry.`);
+					console.log(
+						`${new Date()} Retry '${file.path}' backup next time.`
+					);
 				}
 			}
 		}
 	}
 
 	private async runVaultBackup(): Promise<void> {
-		if (!this.readyToBackup) {
+		if (!this.backupRunnable) {
 			return;
 		}
 		try {
@@ -235,6 +237,12 @@ export default class WeeklyNotePlugin extends Plugin {
 		);
 
 		this.app.workspace.onLayoutReady(() => {
+			if (this.backupRunnable) {
+				if (fs.readdirSync(this.settings.backupDir).length < 1) {
+					this.runVaultBackup();
+				}
+			}
+
 			this.registerEvent(
 				this.app.vault.on("modify", (file: TFile) => {
 					this.scheduleBackup(file);
