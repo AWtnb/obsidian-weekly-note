@@ -28,3 +28,21 @@ export const backupNotice = (s: string, asError: boolean): void => {
 		console.log(`${new Date()} ${s}`);
 	}
 };
+
+export const countFiles = (dirPath: string): number => {
+	let fileCount = 0;
+	const items = fs.readdirSync(dirPath);
+
+	for (const item of items) {
+		const fullPath = path.join(dirPath, item);
+		const stat = fs.statSync(fullPath);
+
+		if (stat.isFile()) {
+			fileCount++;
+		} else if (stat.isDirectory()) {
+			fileCount += countFiles(fullPath);
+		}
+	}
+
+	return fileCount;
+};
