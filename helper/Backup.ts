@@ -22,17 +22,27 @@ export const backupNote = async (
 	fs.writeFileSync(newPath, content, "utf8");
 };
 
+export const backupNotice = (s: string, asError: boolean = false): void => {
+	if (asError) {
+		new Notice(s, 0);
+		console.error(`${new Date()} ${s}`);
+	} else {
+		new Notice(s);
+		console.log(`${new Date()} ${s}`);
+	}
+};
+
 export const backupVault = async (
 	app: App,
 	backupDir: string
 ): Promise<void> => {
 	if (!backupDir) {
-		new Notice("Backup dir is not specified!");
+		backupNotice("Backup dir is not specified!");
 		return;
 	}
 	backupDir = expandEnvVars(backupDir);
 	if (!fs.existsSync(backupDir)) {
-		new Notice(`Backup dir '${backupDir}' not exists!`, 0);
+		backupNotice(`Backup dir '${backupDir}' not exists!`, true);
 		return;
 	}
 	try {
@@ -42,11 +52,8 @@ export const backupVault = async (
 			await backupNote(app, file, backupDir);
 			copiedCount++;
 		}
-		new Notice(`Backuped ${copiedCount} files.`);
-		console.log(`Backuped ${copiedCount} files to '${backupDir}'`);
+		backupNotice(`Backuped ${copiedCount} files to '${backupDir}'`);
 	} catch (error) {
-		new Notice(`Backup error: ${error.message}`, 0);
-		console.error("Backup error:", error);
 		throw error;
 	}
 };
