@@ -26,7 +26,10 @@ import {
 } from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
 import { FutureNoteModal } from "helper/FutureNotes";
-import { backupVault } from "helper/Backup";
+import { backupNotice, backupFile } from "helper/Backup";
+
+import * as path from "path";
+import * as fs from "fs";
 
 const COMMAND_MakeNotes = "1年分のノートを作る";
 const COMMAND_OpenNote = "今週のノートを開く";
@@ -78,7 +81,7 @@ const DEFAULT_SETTINGS: WeeklyNoteSettings = {
 	],
 	backupDir: "",
 	autoBackupEnabled: true,
-	backupDebounceSeconds: 30,
+	backupDebounceSeconds: 10,
 };
 
 const revealLine = (
@@ -97,6 +100,7 @@ const revealLine = (
 
 export default class WeeklyNotePlugin extends Plugin {
 	settings: WeeklyNoteSettings;
+	private filesToBackup: Set<TFile> = new Set();
 	private backupDebounceTimer: NodeJS.Timeout | null = null;
 
 	private openNote(path: string, mode: OpenMode = "currentTab") {
@@ -119,10 +123,18 @@ export default class WeeklyNotePlugin extends Plugin {
 		return note;
 	}
 
-	private scheduleBackup(): void {
-		if (!this.settings.autoBackupEnabled || !this.settings.backupDir) {
+	private get readyToBackup(): boolean {
+		return (
+			this.settings.autoBackupEnabled && this.settings.backupDir !== ""
+		);
+	}
+
+	private scheduleBackup(file: TFile): void {
+		if (!this.readyToBackup) {
 			return;
 		}
+
+		this.filesToBackup.add(file);
 
 		if (this.backupDebounceTimer) {
 			clearTimeout(this.backupDebounceTimer);
@@ -130,13 +142,56 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		const debounceTime = this.settings.backupDebounceSeconds * 1000;
 		this.backupDebounceTimer = setTimeout(() => {
-			this.runBackupVault();
+			this.runBackup();
 			this.backupDebounceTimer = null;
 		}, debounceTime);
 	}
 
-	private async runBackupVault(): Promise<void> {
-		await backupVault(this.app, this.settings.backupDir);
+	private async runBackup(): Promise<void> {
+		if (!this.readyToBackup) {
+			return;
+		}
+		const files = Array.from(this.filesToBackup);
+		this.filesToBackup.clear();
+		for (const file of files) {
+			try {
+				await backupFile(this.app, file, this.settings.backupDir);
+				backupNotice(`Backuped '${file.path}'`, false);
+			} catch (error) {
+				backupNotice(`Failed to backup '${file.path}': ${error}`, true);
+				if (
+					fs.existsSync(
+						path.join(this.app.vault.getRoot().path, file.path)
+					)
+				) {
+					this.filesToBackup.add(file);
+					console.log(`${new Date()} Save '${file.path}' fo retry.`);
+				}
+			}
+		}
+	}
+
+	private async runVaultBackup(): Promise<void> {
+		if (!this.readyToBackup) {
+			return;
+		}
+		try {
+			const files = this.app.vault.getFiles();
+			let count = 0;
+			for (const file of files) {
+				if (!file.path.endsWith(".md")) {
+					continue;
+				}
+				await backupFile(this.app, file, this.settings.backupDir);
+				count++;
+			}
+			backupNotice(
+				`Backuped ${count} files to '${this.settings.backupDir}'`,
+				false
+			);
+		} catch (error) {
+			backupNotice(`Backup error: ${error}`, true);
+		}
 	}
 
 	async onload() {
@@ -181,26 +236,14 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			this.registerEvent(
-				this.app.vault.on("modify", () => {
-					this.scheduleBackup();
+				this.app.vault.on("modify", (file: TFile) => {
+					this.scheduleBackup(file);
 				})
 			);
 
 			this.registerEvent(
-				this.app.vault.on("create", () => {
-					this.scheduleBackup();
-				})
-			);
-
-			this.registerEvent(
-				this.app.vault.on("delete", () => {
-					this.scheduleBackup();
-				})
-			);
-
-			this.registerEvent(
-				this.app.vault.on("rename", () => {
-					this.scheduleBackup();
+				this.app.vault.on("create", (file: TFile) => {
+					this.scheduleBackup(file);
 				})
 			);
 		});
@@ -210,7 +253,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "save",
 			name: COMMAND_BackupVault,
 			callback: async () => {
-				await this.runBackupVault();
+				await this.runVaultBackup();
 			},
 		});
 
@@ -422,6 +465,9 @@ export default class WeeklyNotePlugin extends Plugin {
 	onunload() {
 		if (this.backupDebounceTimer) {
 			clearTimeout(this.backupDebounceTimer);
+		}
+		if (0 < this.filesToBackup.size) {
+			this.runBackup();
 		}
 	}
 

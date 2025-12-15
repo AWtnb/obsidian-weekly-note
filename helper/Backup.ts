@@ -8,52 +8,31 @@ export const expandEnvVars = (input: string): string => {
 	});
 };
 
-export const backupNote = async (
+export const backupFile = async (
 	app: App,
-	note: TFile,
+	file: TFile,
 	destDir: string
 ): Promise<void> => {
-	destDir = expandEnvVars(destDir);
-	if (!fs.existsSync(destDir)) {
-		fs.mkdirSync(destDir, { recursive: true });
+	if (destDir == "") {
+		throw new Error("Backup dir is not specified.");
 	}
-	const content = await app.vault.read(note);
-	const newPath = path.join(destDir, note.path).replace(".md", ".txt");
+	const content = await app.vault.read(file);
+	const newPath = path
+		.join(expandEnvVars(destDir), file.path)
+		.replace(".md", ".txt");
+	const d = path.dirname(newPath);
+	if (!fs.existsSync(d)) {
+		fs.mkdirSync(d, { recursive: true });
+	}
 	fs.writeFileSync(newPath, content, "utf8");
 };
 
-export const backupNotice = (s: string, asError: boolean = false): void => {
+export const backupNotice = (s: string, asError: boolean): void => {
 	if (asError) {
 		new Notice(s, 0);
 		console.error(`${new Date()} ${s}`);
 	} else {
 		new Notice(s);
 		console.log(`${new Date()} ${s}`);
-	}
-};
-
-export const backupVault = async (
-	app: App,
-	backupDir: string
-): Promise<void> => {
-	if (!backupDir) {
-		backupNotice("Backup dir is not specified!");
-		return;
-	}
-	backupDir = expandEnvVars(backupDir);
-	if (!fs.existsSync(backupDir)) {
-		backupNotice(`Backup dir '${backupDir}' not exists!`, true);
-		return;
-	}
-	try {
-		const files = app.vault.getFiles();
-		let copiedCount = 0;
-		for (const file of files) {
-			await backupNote(app, file, backupDir);
-			copiedCount++;
-		}
-		backupNotice(`Backuped ${copiedCount} files to '${backupDir}'`);
-	} catch (error) {
-		throw error;
 	}
 };
