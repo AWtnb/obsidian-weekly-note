@@ -14,7 +14,7 @@ export const backupFile = async (
 	destDir: string
 ): Promise<void> => {
 	if (destDir == "") {
-		throw new Error("Backup dir is not specified.");
+		throw new Error("Directory path to backup not specified.");
 	}
 	const content = await app.vault.read(file);
 	const newPath = path
