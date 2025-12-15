@@ -8,7 +8,11 @@ export const expandEnvVars = (input: string): string => {
 	});
 };
 
-export const backupNote = async (app: App, note: TFile, destDir: string) => {
+export const backupNote = async (
+	app: App,
+	note: TFile,
+	destDir: string
+): Promise<void> => {
 	destDir = expandEnvVars(destDir);
 	if (!fs.existsSync(destDir)) {
 		fs.mkdirSync(destDir, { recursive: true });
