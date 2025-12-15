@@ -103,6 +103,15 @@ export default class WeeklyNotePlugin extends Plugin {
 	private filesToBackup: Set<TFile> = new Set();
 	private backupDebounceTimer: NodeJS.Timeout | null = null;
 
+	private get backupDirPath(): string {
+		return this.settings.backupDir.replace(
+			/\${([a-zA-Z]+)}/g,
+			(match, varName) => {
+				return process.env[varName] || match;
+			}
+		);
+	}
+
 	private openNote(path: string, mode: OpenMode = "currentTab") {
 		openNote(this.app, path, mode, () => {
 			focusDailyLine(this.app);
@@ -128,9 +137,7 @@ export default class WeeklyNotePlugin extends Plugin {
 	}
 
 	private get backupRunnable(): boolean {
-		return (
-			this.settings.autoBackupEnabled && this.settings.backupDir !== ""
-		);
+		return this.settings.autoBackupEnabled && this.backupDirPath !== "";
 	}
 
 	private scheduleBackup(file: TFile): void {
@@ -159,7 +166,7 @@ export default class WeeklyNotePlugin extends Plugin {
 		this.filesToBackup.clear();
 		for (const file of files) {
 			try {
-				await backupFile(this.app, file, this.settings.backupDir);
+				await backupFile(this.app, file, this.backupDirPath);
 				backupNotice(`Backuped '${file.path}'`, false);
 			} catch (error) {
 				backupNotice(`Failed to backup '${file.path}': ${error}`, true);
@@ -184,11 +191,11 @@ export default class WeeklyNotePlugin extends Plugin {
 				if (!file.path.endsWith(".md")) {
 					continue;
 				}
-				await backupFile(this.app, file, this.settings.backupDir);
+				await backupFile(this.app, file, this.backupDirPath);
 				count++;
 			}
 			backupNotice(
-				`Backuped ${count} files to '${this.settings.backupDir}'`,
+				`Backuped ${count} files to '${this.backupDirPath}'`,
 				false
 			);
 		} catch (error) {
@@ -238,7 +245,7 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			if (this.backupRunnable) {
-				if (fs.readdirSync(this.settings.backupDir).length < 1) {
+				if (fs.readdirSync(this.backupDirPath).length < 1) {
 					this.runVaultBackup();
 				}
 			}

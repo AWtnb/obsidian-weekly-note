@@ -2,12 +2,6 @@ import { App, Notice, TFile } from "obsidian";
 import * as path from "path";
 import * as fs from "fs";
 
-export const expandEnvVars = (input: string): string => {
-	return input.replace(/\${(\w+)}/g, (match, varName) => {
-		return process.env[varName] || match;
-	});
-};
-
 export const backupFile = async (
 	app: App,
 	file: TFile,
@@ -17,9 +11,7 @@ export const backupFile = async (
 		throw new Error("Directory path to backup not specified.");
 	}
 	const content = await app.vault.read(file);
-	const newPath = path
-		.join(expandEnvVars(destDir), file.path)
-		.replace(".md", ".txt");
+	const newPath = path.join(destDir, file.path).replace(".md", ".txt");
 	const d = path.dirname(newPath);
 	if (!fs.existsSync(d)) {
 		fs.mkdirSync(d, { recursive: true });
