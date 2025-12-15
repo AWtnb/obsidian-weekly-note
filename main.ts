@@ -130,12 +130,12 @@ export default class WeeklyNotePlugin extends Plugin {
 
 		const debounceTime = this.settings.backupDebounceSeconds * 1000;
 		this.backupDebounceTimer = setTimeout(() => {
-			this.runBackup();
+			this.runBackupVault();
 			this.backupDebounceTimer = null;
 		}, debounceTime);
 	}
 
-	private async runBackup(): Promise<void> {
+	private async runBackupVault(): Promise<void> {
 		await backupVault(this.app, this.settings.backupDir);
 	}
 
@@ -210,7 +210,7 @@ export default class WeeklyNotePlugin extends Plugin {
 			icon: "save",
 			name: COMMAND_BackupVault,
 			callback: async () => {
-				await this.runBackup();
+				await this.runBackupVault();
 			},
 		});
 
