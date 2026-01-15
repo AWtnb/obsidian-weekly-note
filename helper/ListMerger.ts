@@ -218,6 +218,26 @@ const findLineInsertion = (
 	return lineInsertion(baseLines.length, trString);
 };
 
+const limitConsecutiveBlankLine = (arr: string[], limit: number): string[] => {
+	const accum = arr.reduce<{ result: string[]; emptyCount: number }>(
+		(acc, item) => {
+			if (item === "") {
+				if (acc.emptyCount < limit) {
+					acc.result.push(item);
+				}
+				acc.emptyCount++;
+			} else {
+				acc.result.push(item);
+				acc.emptyCount = 0;
+			}
+			return acc;
+		},
+		{ result: [], emptyCount: 0 }
+	);
+
+	return accum.result;
+};
+
 class Context {
 	heading: string = "";
 	breadcrumb: string[] = [];
@@ -257,13 +277,24 @@ const appendToFile = async (
 			existingLines.slice(0, baseListStart + insertion.start),
 			insertion.content,
 			existingLines.slice(baseListStart + insertion.start),
+			"",
 		].flat();
-		await app.vault.modify(file, newLines.join("\n") + "\n");
+		await app.vault.modify(
+			file,
+			limitConsecutiveBlankLine(newLines, 1).join("\n")
+		);
 	} else {
-		const newLines = [task.context.heading, task.tree]
-			.flat()
-			.filter((line) => 0 < line.trim().length);
-		await app.vault.append(file, "\n\n" + newLines.join("\n") + "\n");
+		const newLines = [
+			existingLines,
+			"",
+			task.context.heading,
+			task.tree,
+			"",
+		].flat();
+		await app.vault.modify(
+			file,
+			limitConsecutiveBlankLine(newLines, 1).join("\n")
+		);
 	}
 	new Notice(`Appended to: ${path}`);
 };
