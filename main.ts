@@ -26,7 +26,7 @@ import {
 } from "helper/NoteSwitcher";
 import { sendTask } from "helper/ListMerger";
 import { FutureNoteModal } from "helper/FutureNotes";
-import { backupNotice, backupFile, countFiles } from "helper/Backup";
+import { backupNotice, backupFile } from "helper/Backup";
 
 import * as path from "path";
 import * as fs from "fs";
@@ -244,14 +244,6 @@ export default class WeeklyNotePlugin extends Plugin {
 		);
 
 		this.app.workspace.onLayoutReady(() => {
-			if (
-				this.backupRunnable &&
-				countFiles(this.backupDirPath) <
-					this.app.vault.getFiles().length
-			) {
-				this.runVaultBackup();
-			}
-
 			this.registerEvent(
 				this.app.vault.on("modify", (file: TFile) => {
 					this.scheduleBackup(file);
